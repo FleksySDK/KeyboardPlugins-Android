@@ -1,0 +1,35 @@
+<resources xmlns:tools="http://schemas.android.com/tools"> <!-- v -->
+
+    <style name="CardTitle" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textColor">@color/secondary_color</item>
+        <item name="android:textSize">@dimen/card_title_text_size</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <style name="CardDescription" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textColor">@color/secondary_color</item>
+        <item name="android:textSize">@dimen/card_title_text_size</item>
+        <item name="android:maxLines">4</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <style name="PermissionActivityStyle" parent="Theme.AppCompat">
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation</item>
+    </style>
+
+    <style name="AppButton" parent="Widget.AppCompat.TextView">
+        <item name="android:layout_width">@dimen/buttons_min_width</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingTop">@dimen/buttons_vertical_padding</item>
+        <item name="android:paddingBottom">@dimen/buttons_vertical_padding</item>
+        <item name="android:textSize">@dimen/buttons_text_size</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+</resources>

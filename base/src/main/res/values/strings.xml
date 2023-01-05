@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="search_hint">Search</string>
+	<string name="search_app_hint">" on %1$s"</string>
+	<string name="error_connection_message">Oops, check your connection and try again</string>
+	<string name="error_empty_message">No results were found</string>
+	<string name="error_general_message">Something went wrong</string>
+	<string name="error_message_close">Close</string>
+	<string name="error_message_retry">Try again</string>
+	<string name="duration">%1$s SEC</string>
+</resources>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/autocompleteBackground"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/autocomplete_height"
+    android:background="@color/background_color"
+    android:orientation="horizontal">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/autocompleteIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_marginStart="@dimen/autocomplete_icon_margin"
+        android:layout_marginEnd="@dimen/autocomplete_icon_margin"
+        app:srcCompat="@drawable/ic_autocomplete"
+        app:tint="@color/tertiary_color" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/autocompleteValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:textColor="@color/tertiary_color"
+        android:textSize="@dimen/autocomplete_text_size"
+        tools:text="Autocomplete" />
+
+</LinearLayout>

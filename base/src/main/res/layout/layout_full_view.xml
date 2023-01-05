@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<co.thingthing.fleksyapps.base.BaseAppView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clickable="true"
+    android:focusable="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/fullViewContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingBottom="48dp"
+        android:clickable="true"
+        android:clipChildren="true"
+        android:focusable="true">
+
+        <!-- Items -->
+
+        <ImageView
+            android:id="@+id/fullViewAppIcon"
+            android:layout_width="@dimen/base_icon_size"
+            android:layout_height="@dimen/base_icon_size"
+            android:layout_margin="@dimen/app_icon_margin"
+            android:labelFor="@+id/appInput"
+            app:layout_constraintBottom_toTopOf="@id/fullViewAppItems"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:ignore="ContentDescription"
+            tools:src="@drawable/sample" />
+
+        <LinearLayout
+            android:id="@+id/fullViewAppInputContainer"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:gravity="center_vertical"
+            app:layout_constraintBottom_toTopOf="@+id/fullViewAppItems"
+            app:layout_constraintEnd_toStartOf="@id/fullViewAppClose"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toEndOf="@id/fullViewAppIcon"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintWidth_default="spread">
+
+            <EditText
+                android:id="@+id/fullViewAppInput"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/app_input_margin_start"
+                android:background="@android:color/transparent"
+                android:imeOptions="actionSearch"
+                android:importantForAutofill="no"
+                android:inputType="text"
+                android:maxLines="1"
+                android:textColorHint="@android:color/darker_gray"
+                android:textSize="@dimen/base_search_text_size"
+                tools:hint="Search"
+                tools:text="" />
+
+            <TextView
+                android:id="@+id/fullViewAppInputHint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="none"
+                android:singleLine="true"
+                android:textColor="@android:color/darker_gray"
+                android:textSize="@dimen/base_search_text_size"
+                tools:text=" on App" />
+        </LinearLayout>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/fullViewAppClose"
+            android:layout_width="@dimen/base_icon_size"
+            android:layout_height="@dimen/base_icon_size"
+            android:layout_marginEnd="8dp"
+            android:src="@drawable/ic_back"
+            app:layout_constraintBottom_toBottomOf="@id/fullViewAppInputContainer"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/fullViewAppInputContainer"
+            tools:ignore="ContentDescription" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/fullViewAppItems"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:clipToPadding="false"
+            android:padding="2dp"
+            app:layout_constraintBottom_toTopOf="@+id/fullViewAppCategories"
+            app:layout_constraintTop_toBottomOf="@+id/fullViewAppIcon" />
+
+        <androidx.core.widget.ContentLoadingProgressBar
+            android:id="@+id/fullViewContentLoader"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            app:layout_constraintBottom_toTopOf="@id/fullViewAppCategories"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Categories -->
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/fullViewAppCategories"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/base_categories_height"
+            android:layout_marginBottom="4dp"
+            android:clipToPadding="false"
+            android:padding="2dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <!-- Search bar -->
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/fullViewAppShareCheck"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@id/fullViewAppItems"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:srcCompat="@drawable/ic_success" />
+
+        <include
+            android:id="@+id/fullViewEmptyErrorLayout"
+            layout="@layout/layout_empty_error"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <include
+            android:id="@+id/fullViewConnectionErrorLayout"
+            layout="@layout/layout_connection_error"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <include
+            android:id="@+id/fullViewGeneralErrorLayout"
+            layout="@layout/layout_general_error"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</co.thingthing.fleksyapps.base.BaseAppView>

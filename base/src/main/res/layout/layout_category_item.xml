@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="wrap_content"
+	android:layout_height="match_parent"
+	android:layout_margin="@dimen/category_margin">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/categoryName"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:background="@drawable/rounded_box"
+        android:gravity="center"
+        android:maxLines="1"
+        android:paddingStart="@dimen/category_horizontal_padding"
+        android:paddingEnd="@dimen/category_horizontal_padding"
+        android:textAlignment="center"
+        android:textAllCaps="true"
+        android:textSize="@dimen/category_text_size"
+        tools:text="Sample" />
+
+</FrameLayout>

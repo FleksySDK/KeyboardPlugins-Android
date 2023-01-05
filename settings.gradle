@@ -1,0 +1,5 @@
+rootProject.name = "Fleksy Apps"
+include ':app'
+include ':base'
+include ':giphy'
+

@@ -1,6 +1,6 @@
-# fleksyapps-Android
+# KeyboardPlugins-Android
 
-This is the official repository for first party Fleksy Apps. It contains a sample gif search app using GIPHY, and a Base module that will let any user create their owr basic app with a simple search functionality. More apps will be added in the future.
+This is the official repository for first party Fleksy Keyboard Plugins. It contains a sample gif search app using GIPHY, and a Base module that will let any user create their owr basic app with a simple search functionality. More apps will be added in the future.
 
 # Getting Started
 1. Clone this repository

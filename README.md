@@ -7,7 +7,6 @@ This is a way to provide your own personalized feature on top of the Fleksy keyb
 
 This repository contains a collection of Android FleksyApps: add-ons for keyboard extensions built with the Android [Fleksy Keyboard SDK](https://docs.fleksy.com/keyboard-sdk/)
 
-It includes the `BaseApp` 
 This project contains:
 * [SampleApp](app/): An app to showcase how to use FleksyApps with out the Fleksy Keyboard SDK.
 * [BaseApp](base/): A template that makes the process of creating certain style of FleksyApps a lot easier and faster.

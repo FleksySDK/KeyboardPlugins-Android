@@ -18,6 +18,9 @@ This project contains:
 2. Open in Android Studio
 3. This app requires a Fleksy SDK license and Media Share Api key to run properly. If you don't have one, please contact us.
 4. In the file `app/src/main/java/co/thingthing/fleksy/lib/fleksyapps/SimpleKeyboardService.kt` file, replace the corresponding text with your provided api keys and license.
+   
+   ![Screenshot 2024-07-23 at 14 26 06](https://github.com/user-attachments/assets/ba8aed91-7857-4f7f-b0f5-306b379bb81f)
+
 5. Run the project.
 
 # How to get help? 🙋

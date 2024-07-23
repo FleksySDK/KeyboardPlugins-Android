@@ -1,13 +1,21 @@
 package co.thingthing.fleksyapps.base
 
+import android.view.LayoutInflater
 import android.view.ViewGroup
+import co.thingthing.fleksyapps.base.databinding.LayoutCategoryItemBinding
 import co.thingthing.fleksyapps.base.viewholders.CategoryViewHolder
 import co.thingthing.fleksyapps.core.AppTheme
 
 class BaseCategoryAdapter : BaseAdapter<BaseCategory>() {
 
     override fun create(parent: ViewGroup, viewType: Int): BaseViewHolder<BaseCategory> =
-        CategoryViewHolder(parent)
+        CategoryViewHolder(
+            LayoutCategoryItemBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
+        )
 
     fun onItemSelected(category: BaseCategory) {
         val oldSelected = items.indexOfFirst { it.selected }

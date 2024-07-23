@@ -1,16 +1,15 @@
 package co.thingthing.fleksyapps.base.viewholders
 
-import android.view.ViewGroup
+import android.view.View
 import co.thingthing.fleksyapps.base.BaseResult
 import co.thingthing.fleksyapps.base.BaseViewHolder
 import co.thingthing.fleksyapps.base.R
+import co.thingthing.fleksyapps.base.databinding.LayoutVideoItemBinding
 import co.thingthing.fleksyapps.base.utils.FrescoImageLoader
 import co.thingthing.fleksyapps.base.utils.preferredImage
-import kotlinx.android.synthetic.main.layout_image_item.view.image
-import kotlinx.android.synthetic.main.layout_video_item.view.duration
 
-class VideoViewHolder(parent: ViewGroup) :
-    BaseViewHolder<BaseResult>(parent, R.layout.layout_video_item) {
+class VideoViewHolder(private val binding: LayoutVideoItemBinding) :
+    BaseViewHolder<BaseResult>(binding.root) {
     private val frescoImageLoader: FrescoImageLoader by lazy { FrescoImageLoader() }
 
     override fun bind(viewModel: BaseResult) {
@@ -19,7 +18,7 @@ class VideoViewHolder(parent: ViewGroup) :
             val contentTypes = listOf("image/webp", "video/mp4", "image/gif", "image/jpeg")
             vm.thumbnail?.preferredImage(contentTypes)?.also { image ->
                 frescoImageLoader.load(
-                    itemView.image,
+                    binding.image,
                     vm.theme.background,
                     vm.theme.foreground,
                     image.width.toFloat(),
@@ -30,8 +29,11 @@ class VideoViewHolder(parent: ViewGroup) :
                     )?.url
                 )
             }
-            itemView.duration.text =
-                itemView.context.getString(R.string.duration, vm.duration.toString())
+            vm.duration?.let {
+                binding.duration.text =
+                    itemView.context.getString(R.string.duration, vm.duration.toString())
+            } ?: run { binding.duration.visibility = View.GONE }
+
         }
     }
 }

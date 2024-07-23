@@ -3,10 +3,9 @@ package co.thingthing.fleksyapps.base
 import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
-import android.view.View
 import android.widget.LinearLayout
+import co.thingthing.fleksyapps.base.databinding.LayoutAutocompleteBinding
 import co.thingthing.fleksyapps.core.AppTheme
-import kotlinx.android.synthetic.main.layout_autocomplete.view.*
 
 class AutocompletesView @JvmOverloads constructor(
     context: Context,
@@ -20,15 +19,18 @@ class AutocompletesView @JvmOverloads constructor(
         removeAutocompletes()
         autocompletes.forEachIndexed { i, autocomplete ->
             if (i < MAX_AUTOCOMPLETE) {
-                addView(LayoutInflater.from(context).inflate(R.layout.layout_autocomplete, this, false).apply {
+                val binding =
+                    LayoutAutocompleteBinding.inflate(LayoutInflater.from(context), this, false)
+                binding.apply {
                     autocompleteBackground.setBackgroundColor(theme.background)
                     autocompleteIcon.setColorFilter(theme.foreground)
                     autocompleteValue.apply {
                         setTextColor(theme.foreground)
                         text = autocomplete.value
                     }
-                    setOnClickListener { listener?.onClickAutocomplete(autocomplete) }
-                })
+                    root.setOnClickListener { listener?.onClickAutocomplete(autocomplete) }
+                }
+                addView(binding.root)
             }
         }
     }

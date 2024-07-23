@@ -1,4 +1,4 @@
-package co.thingthing.fleksyapps.giphy.models
+package co.thingthing.fleksyapps.mediashare.models
 
 data class CategoriesResponse(val data: List<Category>) {
     data class Category(val name: String)

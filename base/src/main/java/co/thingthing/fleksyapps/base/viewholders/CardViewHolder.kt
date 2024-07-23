@@ -3,11 +3,10 @@ package co.thingthing.fleksyapps.base.viewholders
 import android.view.ViewGroup
 import co.thingthing.fleksyapps.base.BaseResult
 import co.thingthing.fleksyapps.base.BaseViewHolder
-import co.thingthing.fleksyapps.base.R
-import kotlinx.android.synthetic.main.layout_card_item.view.*
+import co.thingthing.fleksyapps.base.databinding.LayoutCardItemBinding
 
-class CardViewHolder(parent: ViewGroup) :
-    BaseViewHolder<BaseResult>(parent, R.layout.layout_card_item) {
+class CardViewHolder(private val binding: LayoutCardItemBinding) :
+    BaseViewHolder<BaseResult>(binding.root) {
 
     override fun bind(viewModel: BaseResult) {
         super.bind(viewModel)
@@ -15,7 +14,7 @@ class CardViewHolder(parent: ViewGroup) :
         val cardView = (viewModel as BaseResult.Card).view
         (cardView.parent as? ViewGroup)?.removeView(cardView)
 
-        itemView.cardContainer.apply {
+        binding.cardContainer.apply {
             removeAllViews()
             addView(cardView)
         }

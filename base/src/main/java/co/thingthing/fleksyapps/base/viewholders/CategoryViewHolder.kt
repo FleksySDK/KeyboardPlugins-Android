@@ -2,21 +2,22 @@ package co.thingthing.fleksyapps.base.viewholders
 
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
-import android.view.ViewGroup
 import androidx.core.graphics.blue
 import androidx.core.graphics.green
 import androidx.core.graphics.red
 import co.thingthing.fleksyapps.base.BaseCategory
 import co.thingthing.fleksyapps.base.BaseViewHolder
-import co.thingthing.fleksyapps.base.R
-import kotlinx.android.synthetic.main.layout_category_item.view.categoryName
+import co.thingthing.fleksyapps.base.databinding.LayoutCategoryItemBinding
 
-class CategoryViewHolder(parent: ViewGroup) :
-    BaseViewHolder<BaseCategory>(parent, R.layout.layout_category_item) {
+class CategoryViewHolder(
+    private val binding: LayoutCategoryItemBinding
+) :
+    BaseViewHolder<BaseCategory>(binding.root) {
+
 
     override fun bind(viewModel: BaseCategory) {
         super.bind(viewModel)
-        itemView.categoryName.apply {
+        binding.categoryName.apply {
             text = viewModel.label
             setTextColor(viewModel.theme.foreground)
             typeface = viewModel.typeface

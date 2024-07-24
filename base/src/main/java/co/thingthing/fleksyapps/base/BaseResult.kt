@@ -38,7 +38,7 @@ sealed class BaseResult(
     open class Video(
         override val id: String? = null,
         val video: List<BaseMedia>,
-        val duration: Long,
+        val duration: Long?,
         val thumbnail: List<BaseMedia>?,
         val link: String?,
         val label: String?,

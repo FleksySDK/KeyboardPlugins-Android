@@ -1,11 +1,13 @@
 package co.thingthing.fleksyapps.base
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.graphics.drawable.GradientDrawable
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
 import android.view.accessibility.AccessibilityEvent
 import android.view.animation.Animation
@@ -15,28 +17,41 @@ import android.view.inputmethod.ExtractedText
 import android.view.inputmethod.ExtractedTextRequest
 import android.widget.EditText
 import androidx.annotation.ColorInt
-import androidx.core.graphics.*
+import androidx.core.graphics.BlendModeColorFilterCompat
+import androidx.core.graphics.BlendModeCompat
+import androidx.core.graphics.blue
+import androidx.core.graphics.green
+import androidx.core.graphics.red
 import androidx.core.widget.ImageViewCompat
 import androidx.core.widget.doOnTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager.HORIZONTAL
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
+import co.thingthing.fleksyapps.base.databinding.LayoutBaseFrameBinding
+import co.thingthing.fleksyapps.base.databinding.LayoutConnectionErrorBinding
+import co.thingthing.fleksyapps.base.databinding.LayoutEmptyErrorBinding
+import co.thingthing.fleksyapps.base.databinding.LayoutFullViewBinding
+import co.thingthing.fleksyapps.base.databinding.LayoutGeneralErrorBinding
 import co.thingthing.fleksyapps.base.utils.empty
 import co.thingthing.fleksyapps.base.utils.getInstallationUniqueId
-import co.thingthing.fleksyapps.core.*
+import co.thingthing.fleksyapps.core.AppConfiguration
+import co.thingthing.fleksyapps.core.AppInputState
+import co.thingthing.fleksyapps.core.AppListener
+import co.thingthing.fleksyapps.core.AppMedia
+import co.thingthing.fleksyapps.core.AppMediaSource
+import co.thingthing.fleksyapps.core.AppTheme
+import co.thingthing.fleksyapps.core.KeyboardApp
+import co.thingthing.fleksyapps.core.KeyboardAppViewMode
+import co.thingthing.fleksyapps.core.TopBarMode
 import com.facebook.drawee.backends.pipeline.Fresco
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposables
 import io.reactivex.schedulers.Schedulers
-import kotlinx.android.synthetic.main.layout_base_frame.view.*
-import kotlinx.android.synthetic.main.layout_connection_error.view.*
-import kotlinx.android.synthetic.main.layout_empty_error.view.*
-import kotlinx.android.synthetic.main.layout_full_view.view.*
-import kotlinx.android.synthetic.main.layout_general_error.view.*
 import java.io.IOException
 
+@SuppressLint("CheckResult")
 abstract class BaseKeyboardApp : KeyboardApp {
     var listener: AppListener? = null
     private var frameView: BaseAppView? = null
@@ -53,6 +68,16 @@ abstract class BaseKeyboardApp : KeyboardApp {
 
     lateinit var theme: AppTheme
     lateinit var inputState: AppInputState
+
+    private lateinit var frameViewBinding: LayoutBaseFrameBinding
+    private lateinit var frameConnectionErrorBinding: LayoutConnectionErrorBinding
+    private lateinit var frameGeneralErrorBinding: LayoutGeneralErrorBinding
+    private lateinit var frameEmptyErrorBinding: LayoutEmptyErrorBinding
+
+    private lateinit var fullViewBinding: LayoutFullViewBinding
+    private lateinit var fullConnectionErrorBinding: LayoutConnectionErrorBinding
+    private lateinit var fullGeneralErrorBinding: LayoutGeneralErrorBinding
+    private lateinit var fullEmptyErrorBinding: LayoutEmptyErrorBinding
 
     val locale get() = appConfiguration?.currentLocale
     val context get() = frameView?.context ?: fullView?.context
@@ -82,6 +107,11 @@ abstract class BaseKeyboardApp : KeyboardApp {
     abstract fun query(query: String, pagination: Pagination): Single<List<BaseResult>>
 
     /**
+     * Show suggestions bar when in frame view mode.
+     */
+    open var topBarMode = TopBarMode.HIDDEN
+
+    /**
      * An optional extended item from an existing list result before preview
      */
     open fun preview(baseResult: BaseResult): Single<BaseResult> = Single.just(baseResult)
@@ -105,14 +135,15 @@ abstract class BaseKeyboardApp : KeyboardApp {
         mode: KeyboardAppViewMode
     ): View {
         return when (mode) {
-            KeyboardAppViewMode.FRAME_VIEW -> {
+            is KeyboardAppViewMode.FrameView -> {
                 fullView = null
                 openFrameView(context, theme, state).also {
-                    frameView?.appInputContainer?.requestFocus()
+                    frameViewBinding.appInputContainer.requestFocus()
                 }
 
             }
-            KeyboardAppViewMode.FULL_VIEW -> {
+
+            is KeyboardAppViewMode.FullView -> {
                 frameView = null
                 openFullView(context, theme, state)
             }
@@ -130,61 +161,64 @@ abstract class BaseKeyboardApp : KeyboardApp {
 
             updateLoader(contentLoading = true, categoriesLoading = true, itemLoading = false)
 
-            appIcon.apply {
-                setImageDrawable(appIcon(context))
-                setOnClickListener { listener?.hide() }
-            }
-
-            appSearchClose.apply {
-                setOnClickListener { onSearchCloseClicked() }
-            }
-
-            zoomViewButton.apply {
-                setOnClickListener {
-                    listener?.show(mode = KeyboardAppViewMode.FULL_VIEW)
+            frameViewBinding.apply {
+                appIcon.apply {
+                    setImageDrawable(appIcon(context))
+                    setOnClickListener { listener?.hide() }
                 }
-            }
 
-            appInput.apply {
-                clearInput(this)
+                appSearchClose.apply {
+                    setOnClickListener { onSearchCloseClicked() }
+                }
 
-                setOnFocusChangeListener(::onInputFocusChanged)
-                doOnTextChanged { text, _, _, _ -> onInputTextChanged(text) }
-                setOnEditorActionListener { v, actionId, _ ->
-                    (actionId == EditorInfo.IME_ACTION_SEARCH).also {
-                        if (it) performSearch(v.text.toString())
+                zoomViewButton.apply {
+                    setOnClickListener {
+                        listener?.show(mode = KeyboardAppViewMode.FullView)
                     }
                 }
 
-                accessibilityDelegate = object : View.AccessibilityDelegate() {
-                    override fun sendAccessibilityEvent(host: View, eventType: Int) {
-                        when (eventType) {
-                            AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED -> {
-                                listener?.onSelectionChanged(
-                                    appInput.selectionStart,
-                                    appInput.selectionEnd
-                                )
+                appInput.apply {
+                    clearInput(this)
+
+                    setOnFocusChangeListener(::onInputFocusChanged)
+                    doOnTextChanged { text, _, _, _ -> onInputTextChanged(text) }
+                    setOnEditorActionListener { v, actionId, _ ->
+                        (actionId == EditorInfo.IME_ACTION_SEARCH).also {
+                            if (it) performSearch(v.text.toString())
+                        }
+                    }
+
+                    accessibilityDelegate = object : View.AccessibilityDelegate() {
+                        override fun sendAccessibilityEvent(host: View, eventType: Int) {
+                            when (eventType) {
+                                AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED -> {
+                                    listener?.onSelectionChanged(
+                                        appInput.selectionStart,
+                                        appInput.selectionEnd
+                                    )
+                                }
                             }
                         }
                     }
                 }
+
+                appItems.apply {
+                    addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                            loadMoreIfNeeded(3)
+                        }
+                    })
+                }
+
+                appInputHint.text = context.getString(configuration.searchAppHint, appName)
+                appInputContainer.setOnClickListener { frameView?.let { appInput.requestFocus() } }
+
+                appAutocomplete.setListener(autocompleteListener)
+
+                inputState = state
+                onHideGesture = { listener?.hide() }
             }
 
-            appItems.apply {
-                addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                    override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                        loadMoreIfNeeded(3)
-                    }
-                })
-            }
-
-            appInputHint.text = context.getString(configuration.searchAppHint, appName)
-            appInputContainer.setOnClickListener { frameView?.appInput?.requestFocus() }
-
-            appAutocomplete.setListener(autocompleteListener)
-
-            inputState = state
-            onHideGesture = { listener?.hide() }
 
             onThemeChanged(theme)
             if (permissionsGranted()) {
@@ -200,40 +234,42 @@ abstract class BaseKeyboardApp : KeyboardApp {
             fullView = this
             nextLoader = null
 
-            fullViewAppIcon.apply {
-                setImageDrawable(appIcon(context))
-                setOnClickListener { listener?.hide() }
-            }
-
-            if (!Fresco.hasBeenInitialized()) {
-                Fresco.initialize(context)
-            }
-
-            updateLoader(contentLoading = true, categoriesLoading = true, itemLoading = false)
-
-            fullViewAppInputContainer.apply {
-                setOnClickListener {
-                    listener?.show(mode = KeyboardAppViewMode.FRAME_VIEW)
+            fullViewBinding.apply {
+                fullViewAppIcon.apply {
+                    setImageDrawable(appIcon(context))
+                    setOnClickListener { listener?.hide() }
                 }
-            }
 
-            fullViewAppItems.apply {
-                addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                    override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                        loadMoreIfNeeded(3)
+                if (!Fresco.hasBeenInitialized()) {
+                    Fresco.initialize(context)
+                }
+
+                updateLoader(contentLoading = true, categoriesLoading = true, itemLoading = false)
+
+                fullViewAppInputContainer.apply {
+                    setOnClickListener {
+                        listener?.show(mode = KeyboardAppViewMode.FrameView(topBarMode))
                     }
-                })
-            }
+                }
 
-            fullViewAppInputHint.text =
-                StringBuilder()
-                    .append(context.getString(configuration.searchHint))
-                    .append(context.getString(configuration.searchAppHint, appName))
-                    .toString()
+                fullViewAppItems.apply {
+                    addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                            loadMoreIfNeeded(3)
+                        }
+                    })
+                }
 
-            fullViewAppClose.apply {
-                setOnClickListener {
-                    listener?.hide()
+                fullViewAppInputHint.text =
+                    StringBuilder()
+                        .append(context.getString(configuration.searchHint))
+                        .append(context.getString(configuration.searchAppHint, appName))
+                        .toString()
+
+                fullViewAppClose.apply {
+                    setOnClickListener {
+                        listener?.hide()
+                    }
                 }
             }
 
@@ -275,136 +311,151 @@ abstract class BaseKeyboardApp : KeyboardApp {
     private fun applyTheme() {
         frameView?.apply {
             setBackgroundColor(theme.background)
-            appInput.setTextColor(theme.foreground)
+            frameViewBinding.apply {
+                appInput.setTextColor(theme.foreground)
 
-            hintColor(theme.foreground).also {
-                appInput.setHintTextColor(it)
-                appInputHint.setTextColor(it)
-            }
+                hintColor(theme.foreground).also {
+                    appInput.setHintTextColor(it)
+                    appInputHint.setTextColor(it)
+                }
 
-            ImageViewCompat.setImageTintList(
-                appSearchClose,
-                ColorStateList.valueOf(theme.foreground)
-            )
-
-            contentLoader.indeterminateDrawable.colorFilter =
-                BlendModeColorFilterCompat.createBlendModeColorFilterCompat(
-                    theme.accent,
-                    BlendModeCompat.SRC_IN
+                ImageViewCompat.setImageTintList(
+                    appSearchClose,
+                    ColorStateList.valueOf(theme.foreground)
                 )
 
-            if (colorizeIcon) appIcon.setColorFilter(theme.foreground, PorterDuff.Mode.SRC_IN)
+                contentLoader.indeterminateDrawable.colorFilter =
+                    BlendModeColorFilterCompat.createBlendModeColorFilterCompat(
+                        theme.accent,
+                        BlendModeCompat.SRC_IN
+                    )
 
-            val primaryButtonBackground = GradientDrawable().apply {
-                setColor(theme.foreground)
-                cornerRadius = 100.0f
-            }
-            val secondaryButtonBackground = GradientDrawable().apply {
-                setStroke(2, theme.foreground)
-                alpha = 70
-                cornerRadius = 100.0f
-            }
+                if (colorizeIcon) appIcon.setColorFilter(theme.foreground, PorterDuff.Mode.SRC_IN)
 
+                val primaryButtonBackground = GradientDrawable().apply {
+                    setColor(theme.foreground)
+                    cornerRadius = 100.0f
+                }
+                val secondaryButtonBackground = GradientDrawable().apply {
+                    setStroke(2, theme.foreground)
+                    alpha = 70
+                    cornerRadius = 100.0f
+                }
 
-            emptyErrorLayout.setBackgroundColor(theme.background)
-            errorEmptyLabel.typeface = customTypefaces?.bold
-            errorEmptyLabel.apply {
-                setTextColor(theme.foreground)
-                typeface = customTypefaces?.bold
-            }
+                frameEmptyErrorBinding.apply {
+                    root.setBackgroundColor(theme.background)
+                    errorEmptyLabel.typeface = customTypefaces?.bold
+                    errorEmptyLabel.apply {
+                        setTextColor(theme.foreground)
+                        typeface = customTypefaces?.bold
+                    }
+                }
+                frameConnectionErrorBinding.apply {
+                    root.setBackgroundColor(theme.background)
+                    errorConnectionRetryButton.apply {
+                        setTextColor(theme.background)
+                        background = primaryButtonBackground
+                    }
+                    errorConnectionCancelButton.apply {
+                        setTextColor(theme.foreground)
+                        background = secondaryButtonBackground
+                    }
+                    errorConnectionLabel.apply {
+                        setTextColor(theme.foreground)
+                        typeface = customTypefaces?.bold
+                    }
+                }
 
-            connectionErrorLayout.setBackgroundColor(theme.background)
-            errorConnectionRetryButton.apply {
-                setTextColor(theme.background)
-                background = primaryButtonBackground
-            }
-            errorConnectionCancelButton.apply {
-                setTextColor(theme.foreground)
-                background = secondaryButtonBackground
-            }
-            errorConnectionLabel.apply {
-                setTextColor(theme.foreground)
-                typeface = customTypefaces?.bold
-            }
-
-            generalErrorLayout.setBackgroundColor(theme.background)
-            errorGeneralRetryButton.apply {
-                setTextColor(theme.background)
-                background = primaryButtonBackground
-            }
-            errorGeneralCancelButton.apply {
-                setTextColor(theme.foreground)
-                background = secondaryButtonBackground
-            }
-            errorGeneralLabel.apply {
-                setTextColor(theme.foreground)
-                typeface = customTypefaces?.bold
+                frameGeneralErrorBinding.apply {
+                    root.setBackgroundColor(theme.background)
+                    errorGeneralRetryButton.apply {
+                        setTextColor(theme.background)
+                        background = primaryButtonBackground
+                    }
+                    errorGeneralCancelButton.apply {
+                        setTextColor(theme.foreground)
+                        background = secondaryButtonBackground
+                    }
+                    errorGeneralLabel.apply {
+                        setTextColor(theme.foreground)
+                        typeface = customTypefaces?.bold
+                    }
+                }
             }
         }
 
         fullView?.apply {
             setBackgroundColor(theme.background)
-            fullViewAppInput.setTextColor(theme.foreground)
 
-            hintColor(theme.foreground).also {
-                fullViewAppInput.setHintTextColor(it)
-                fullViewAppInputHint.setTextColor(it)
-            }
+            fullViewBinding.apply {
+                fullViewAppInput.setTextColor(theme.foreground)
 
-            fullViewContentLoader.indeterminateDrawable.colorFilter =
-                BlendModeColorFilterCompat.createBlendModeColorFilterCompat(
-                    theme.accent,
-                    BlendModeCompat.SRC_IN
+                hintColor(theme.foreground).also {
+                    fullViewAppInput.setHintTextColor(it)
+                    fullViewAppInputHint.setTextColor(it)
+                }
+
+                fullViewContentLoader.indeterminateDrawable.colorFilter =
+                    BlendModeColorFilterCompat.createBlendModeColorFilterCompat(
+                        theme.accent,
+                        BlendModeCompat.SRC_IN
+                    )
+
+                val primaryButtonBackground = GradientDrawable().apply {
+                    setColor(theme.foreground)
+                    cornerRadius = 100.0f
+                }
+                val secondaryButtonBackground = GradientDrawable().apply {
+                    setStroke(2, theme.foreground)
+                    alpha = 70
+                    cornerRadius = 100.0f
+                }
+
+                if (colorizeIcon) fullViewAppIcon.setColorFilter(
+                    theme.foreground,
+                    PorterDuff.Mode.SRC_IN
                 )
 
-            val primaryButtonBackground = GradientDrawable().apply {
-                setColor(theme.foreground)
-                cornerRadius = 100.0f
-            }
-            val secondaryButtonBackground = GradientDrawable().apply {
-                setStroke(2, theme.foreground)
-                alpha = 70
-                cornerRadius = 100.0f
-            }
+                fullEmptyErrorBinding.apply {
+                    root.setBackgroundColor(theme.background)
+                    errorEmptyLabel.typeface = customTypefaces?.bold
+                    errorEmptyLabel.apply {
+                        setTextColor(theme.foreground)
+                        typeface = customTypefaces?.bold
+                    }
+                }
 
-            if (colorizeIcon) fullViewAppIcon.setColorFilter(
-                theme.foreground,
-                PorterDuff.Mode.SRC_IN
-            )
+                fullConnectionErrorBinding.apply {
+                    root.setBackgroundColor(theme.background)
+                    errorConnectionRetryButton.apply {
+                        setTextColor(theme.background)
+                        background = primaryButtonBackground
+                    }
+                    errorConnectionCancelButton.apply {
+                        setTextColor(theme.foreground)
+                        background = secondaryButtonBackground
+                    }
+                    errorConnectionLabel.apply {
+                        setTextColor(theme.foreground)
+                        typeface = customTypefaces?.bold
+                    }
+                }
 
-            fullViewEmptyErrorLayout.setBackgroundColor(theme.background)
-            errorEmptyLabel.typeface = customTypefaces?.bold
-            errorEmptyLabel.apply {
-                setTextColor(theme.foreground)
-                typeface = customTypefaces?.bold
-            }
-
-            fullViewConnectionErrorLayout.setBackgroundColor(theme.background)
-            errorConnectionRetryButton.apply {
-                setTextColor(theme.background)
-                background = primaryButtonBackground
-            }
-            errorConnectionCancelButton.apply {
-                setTextColor(theme.foreground)
-                background = secondaryButtonBackground
-            }
-            errorConnectionLabel.apply {
-                setTextColor(theme.foreground)
-                typeface = customTypefaces?.bold
-            }
-
-            fullViewGeneralErrorLayout.setBackgroundColor(theme.background)
-            errorGeneralRetryButton.apply {
-                setTextColor(theme.background)
-                background = primaryButtonBackground
-            }
-            errorGeneralCancelButton.apply {
-                setTextColor(theme.foreground)
-                background = secondaryButtonBackground
-            }
-            errorGeneralLabel.apply {
-                setTextColor(theme.foreground)
-                typeface = customTypefaces?.bold
+                fullGeneralErrorBinding.apply {
+                    root.setBackgroundColor(theme.background)
+                    errorGeneralRetryButton.apply {
+                        setTextColor(theme.background)
+                        background = primaryButtonBackground
+                    }
+                    errorGeneralCancelButton.apply {
+                        setTextColor(theme.foreground)
+                        background = secondaryButtonBackground
+                    }
+                    errorGeneralLabel.apply {
+                        setTextColor(theme.foreground)
+                        typeface = customTypefaces?.bold
+                    }
+                }
             }
         }
     }
@@ -414,9 +465,9 @@ abstract class BaseKeyboardApp : KeyboardApp {
 
     private fun loadMoreIfNeeded(pages: Int) {
         val recyclerView = if (fullView != null) {
-            fullView?.fullViewAppItems ?: return
+            fullViewBinding.fullViewAppItems
         } else {
-            frameView?.appItems ?: return
+            frameViewBinding.appItems
         }
         if (!isContentLoading) {
             val offset = recyclerView.computeHorizontalScrollOffset()
@@ -428,7 +479,6 @@ abstract class BaseKeyboardApp : KeyboardApp {
             }
         }
     }
-
 
     override fun onInputStateChanged(state: AppInputState) {
         inputState = state
@@ -475,6 +525,7 @@ abstract class BaseKeyboardApp : KeyboardApp {
         updateLoader(categoriesLoading = false)
     }
 
+
     private fun onCategoriesLoaded(items: List<BaseCategory>) {
         categoryAdapter = BaseCategoryAdapter().apply {
             addAll(items)
@@ -488,13 +539,12 @@ abstract class BaseKeyboardApp : KeyboardApp {
             }
         }
         if (fullView != null) {
-            fullView?.fullViewAppCategories?.also {
+            fullViewBinding.fullViewAppCategories.also {
                 it.adapter = categoryAdapter
                 it.layoutManager = LinearLayoutManager(frameView?.context, HORIZONTAL, false)
             }
         } else {
-
-            frameView?.appCategories?.also {
+            frameViewBinding.appCategories.also {
                 it.adapter = categoryAdapter
                 it.layoutManager = LinearLayoutManager(frameView?.context, HORIZONTAL, false)
             }
@@ -521,7 +571,9 @@ abstract class BaseKeyboardApp : KeyboardApp {
     }
 
     private fun performSearch(query: String) {
-        frameView?.appAutocomplete?.removeAutocompletes()
+        frameView?.let {
+            frameViewBinding.appAutocomplete.removeAutocompletes()
+        }
         categoryAdapter?.clearSelected()
         nextLoader = { newPagination -> query(query, newPagination) }
         pagination = Pagination(limit = configuration.requestLimit)
@@ -534,12 +586,12 @@ abstract class BaseKeyboardApp : KeyboardApp {
         }
 
         if (fullView != null) {
-            fullView?.fullViewAppItems?.apply {
+            fullViewBinding.fullViewAppItems.apply {
                 adapter = resultAdapter
                 layoutManager = buildHorizontalLayoutManager()
             }
         } else {
-            frameView?.appItems?.apply {
+            frameViewBinding.appItems.apply {
                 adapter = resultAdapter
                 layoutManager = buildHorizontalLayoutManager()
             }
@@ -565,24 +617,26 @@ abstract class BaseKeyboardApp : KeyboardApp {
     }
 
     fun showResultAnimation(success: Boolean) {
-        frameView?.appShareCheck?.also { view ->
-            view.setImageResource(
-                if (success) R.drawable.ic_success
-                else R.drawable.ic_fail
-            )
+        frameView?.let {
+            frameViewBinding.appShareCheck.also { view ->
+                view.setImageResource(
+                    if (success) R.drawable.ic_success
+                    else R.drawable.ic_fail
+                )
 
-            view.visibility = View.VISIBLE
-            view.startAnimation(AnimationUtils
-                .loadAnimation(context, R.anim.check_animation).apply {
-                    setAnimationListener(object : Animation.AnimationListener {
-                        override fun onAnimationEnd(p0: Animation?) {
-                            view.visibility = View.GONE
-                        }
+                view.visibility = View.VISIBLE
+                view.startAnimation(AnimationUtils
+                    .loadAnimation(context, R.anim.check_animation).apply {
+                        setAnimationListener(object : Animation.AnimationListener {
+                            override fun onAnimationEnd(p0: Animation?) {
+                                view.visibility = View.GONE
+                            }
 
-                        override fun onAnimationRepeat(p0: Animation?) {}
-                        override fun onAnimationStart(p0: Animation?) {}
+                            override fun onAnimationRepeat(p0: Animation?) {}
+                            override fun onAnimationStart(p0: Animation?) {}
+                        })
                     })
-                })
+            }
         }
     }
 
@@ -602,7 +656,9 @@ abstract class BaseKeyboardApp : KeyboardApp {
     }
 
     private fun onAutocompleteLoaded(autocompletes: List<BaseAutocomplete>) {
-        frameView?.appAutocomplete?.onReceiveAutocompletes(theme, autocompletes)
+        frameView?.let {
+            frameViewBinding.appAutocomplete.onReceiveAutocompletes(theme, autocompletes)
+        }
     }
 
     private fun onAutocompleteError(err: Throwable?) {
@@ -629,6 +685,7 @@ abstract class BaseKeyboardApp : KeyboardApp {
                 )
             }
         }
+
         is BaseResult.Video -> {
             result.video.firstOrNull()?.let {
                 AppMedia(
@@ -642,6 +699,7 @@ abstract class BaseKeyboardApp : KeyboardApp {
                 )
             }
         }
+
         is BaseResult.Card -> {
             AppMedia(
                 media = AppMediaSource.RemoteUrl(result.url),
@@ -655,6 +713,7 @@ abstract class BaseKeyboardApp : KeyboardApp {
         when (val listMode = configuration.listMode) {
             is ListMode.VariableSize ->
                 StaggeredGridLayoutManager(listMode.rows, HORIZONTAL)
+
             is ListMode.FixedSize ->
                 LinearLayoutManager(frameView?.context, HORIZONTAL, false)
         }
@@ -678,33 +737,28 @@ abstract class BaseKeyboardApp : KeyboardApp {
 
     private fun showEmptyResultError() {
         if (fullView != null) {
-            fullView?.fullViewEmptyErrorLayout?.apply {
-                visibility = View.VISIBLE
-            }
+            fullEmptyErrorBinding.root.visibility = View.VISIBLE
         } else {
-
-            frameView?.emptyErrorLayout?.apply {
-                visibility = View.VISIBLE
-            }
+            frameEmptyErrorBinding.root.visibility = View.VISIBLE
         }
     }
 
     private fun showGeneralError(request: Single<List<BaseResult>>) {
         if (fullView != null) {
-            fullView?.fullViewGeneralErrorLayout?.apply {
-                visibility = View.VISIBLE
+            fullGeneralErrorBinding.apply {
+                root.visibility = View.VISIBLE
                 errorGeneralCancelButton.setOnClickListener { listener?.hide() }
                 errorGeneralRetryButton.setOnClickListener {
-                    visibility = View.GONE
+                    root.visibility = View.GONE
                     performAppend(request)
                 }
             }
         } else {
-            frameView?.generalErrorLayout?.apply {
-                visibility = View.VISIBLE
+            frameGeneralErrorBinding.apply {
+                root.visibility = View.VISIBLE
                 errorGeneralCancelButton.setOnClickListener { listener?.hide() }
                 errorGeneralRetryButton.setOnClickListener {
-                    visibility = View.GONE
+                    root.visibility = View.GONE
                     performAppend(request)
                 }
             }
@@ -714,20 +768,20 @@ abstract class BaseKeyboardApp : KeyboardApp {
 
     private fun showConnectionError(request: Single<List<BaseResult>>) {
         if (fullView != null) {
-            fullView?.fullViewConnectionErrorLayout?.apply {
-                visibility = View.VISIBLE
+            fullConnectionErrorBinding.apply {
+                root.visibility = View.VISIBLE
                 errorConnectionCancelButton.setOnClickListener { listener?.hide() }
                 errorConnectionRetryButton.setOnClickListener {
-                    visibility = View.GONE
+                    root.visibility = View.GONE
                     performAppend(request)
                 }
             }
         } else {
-            frameView?.connectionErrorLayout?.apply {
-                visibility = View.VISIBLE
+            frameConnectionErrorBinding.apply {
+                root.visibility = View.VISIBLE
                 errorConnectionCancelButton.setOnClickListener { listener?.hide() }
                 errorConnectionRetryButton.setOnClickListener {
-                    visibility = View.GONE
+                    root.visibility = View.GONE
                     performAppend(request)
                 }
             }
@@ -742,9 +796,9 @@ abstract class BaseKeyboardApp : KeyboardApp {
             nextLoader = null
         } else {
             if (fullView != null) {
-                fullView?.fullViewEmptyErrorLayout?.visibility = View.GONE
+                fullEmptyErrorBinding.root.visibility = View.GONE
             } else {
-                frameView?.emptyErrorLayout?.visibility = View.GONE
+                frameEmptyErrorBinding.root.visibility = View.GONE
             }
             resultAdapter?.addAll(results)
             loadMoreIfNeeded(2)
@@ -761,22 +815,54 @@ abstract class BaseKeyboardApp : KeyboardApp {
         isItemLoading = itemLoading
 
         if (contentLoading || categoriesLoading || itemLoading) {
-            frameView?.contentLoader?.show()
-            fullView?.fullViewContentLoader?.show()
+            frameView?.let {
+                frameViewBinding.contentLoader.show()
+            }
+            fullView?.let {
+                fullViewBinding.fullViewContentLoader.show()
+            }
         } else {
-            frameView?.contentLoader?.hide()
-            fullView?.fullViewContentLoader?.hide()
+            frameView?.let {
+                frameViewBinding.contentLoader.hide()
+            }
+            fullView?.let {
+                fullViewBinding.fullViewContentLoader.hide()
+            }
         }
     }
 
-    private fun createFrameView(context: Context) =
-        View.inflate(context, R.layout.layout_base_frame, null) as BaseAppView
+    private fun createFrameView(context: Context): BaseAppView {
+        frameViewBinding = LayoutBaseFrameBinding.inflate(LayoutInflater.from(context))
 
-    private fun createFullView(context: Context) =
-        View.inflate(context, R.layout.layout_full_view, null) as BaseAppView
+        frameConnectionErrorBinding =
+            LayoutConnectionErrorBinding.bind(frameViewBinding.connectionErrorLayout.root)
+        frameEmptyErrorBinding =
+            LayoutEmptyErrorBinding.bind(frameViewBinding.emptyErrorLayout.root)
+        frameGeneralErrorBinding =
+            LayoutGeneralErrorBinding.bind(frameViewBinding.generalErrorLayout.root)
+
+        return frameViewBinding.root.also {
+            frameView = it
+        }
+    }
+
+    private fun createFullView(context: Context): BaseAppView {
+        fullViewBinding = LayoutFullViewBinding.inflate(LayoutInflater.from(context))
+
+        fullConnectionErrorBinding =
+            LayoutConnectionErrorBinding.bind(fullViewBinding.fullViewConnectionErrorLayout.root)
+        fullEmptyErrorBinding =
+            LayoutEmptyErrorBinding.bind(fullViewBinding.fullViewEmptyErrorLayout.root)
+        fullGeneralErrorBinding =
+            LayoutGeneralErrorBinding.bind(fullViewBinding.fullViewGeneralErrorLayout.root)
+
+        return fullViewBinding.root.also {
+            fullView = it
+        }
+    }
 
     private fun onSearchCloseClicked() {
-        if (frameView?.appInput?.text?.isEmpty() != false) {
+        if (frameViewBinding.appInput.text.isEmpty()) {
             listener?.hide()
         } else {
             clearAppInput()
@@ -806,32 +892,45 @@ abstract class BaseKeyboardApp : KeyboardApp {
 
         if (text.isNullOrBlank()) {
             // todo: change x to close
-            frameView?.appInput?.setHint(configuration.searchHint)
+            frameView?.let {
+                frameViewBinding.appInput.setHint(configuration.searchHint)
+            }
             performDefault()
         } else {
             // todo: change close to x
-            frameView?.appInput?.hint = null
+            frameView?.let {
+                frameViewBinding.appInput.hint = null
+            }
             if (autocompleteEnabled) loadAutocomplete(text.toString())
         }
     }
 
     private fun extractText() {
         val extractedText =
-            ExtractedText().also { frameView?.appInput?.extractText(ExtractedTextRequest(), it) }
+            ExtractedText().also { extractedText ->
+                frameView?.let {
+                    frameViewBinding.appInput.extractText(ExtractedTextRequest(), extractedText)
+                }
+            }
         listener?.onTextExtracted(extractedText)
     }
 
     private fun clearAppInput() {
-        frameView?.appInput?.also { clearInput(it) }
+        frameView?.let {
+            frameViewBinding.appInput.also { clearInput(it) }
+        }
         performDefault()
     }
 
     private fun clearInput(view: EditText) {
         view.setText("")
         view.setHint(configuration.searchHint)
-        if (frameView?.appInput?.hasFocus() == true) {
-            onInputFocusChanged(view, true)
+        frameView?.let {
+            if (frameViewBinding.appInput.hasFocus()) {
+                onInputFocusChanged(view, true)
+            }
         }
+
     }
 
     private fun clear() {

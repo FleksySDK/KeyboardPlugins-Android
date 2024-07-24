@@ -1,6 +1,5 @@
 package co.thingthing.fleksyapps.base
 
-import android.util.Log
 import okhttp3.Interceptor
 import okhttp3.Response
 import okio.Buffer
@@ -13,7 +12,6 @@ class QueryHeaderInterceptor(private val key: String, private val value: String)
                 val buffer = Buffer()
                 copy.body?.writeTo(buffer)
                 buffer.readUtf8()
-                Log.e("OPI", buffer.readUtf8())
             }
         )
 }

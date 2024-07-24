@@ -1,15 +1,15 @@
 package co.thingthing.fleksyapps.base.viewholders
 
-import android.view.ViewGroup
 import co.thingthing.fleksyapps.base.BaseResult
 import co.thingthing.fleksyapps.base.BaseViewHolder
-import co.thingthing.fleksyapps.base.R
+import co.thingthing.fleksyapps.base.databinding.LayoutImageItemBinding
 import co.thingthing.fleksyapps.base.utils.FrescoImageLoader
 import co.thingthing.fleksyapps.base.utils.preferredImage
-import kotlinx.android.synthetic.main.layout_image_item.view.*
 
-class ImageViewHolder(parent: ViewGroup) :
-    BaseViewHolder<BaseResult>(parent, R.layout.layout_image_item) {
+class ImageViewHolder(
+    private val binding: LayoutImageItemBinding
+) :
+    BaseViewHolder<BaseResult>(binding.root) {
     private val frescoImageLoader: FrescoImageLoader by lazy { FrescoImageLoader() }
 
     override fun bind(viewModel: BaseResult) {
@@ -19,7 +19,7 @@ class ImageViewHolder(parent: ViewGroup) :
             val contentTypes = listOf("image/webp", "video/mp4", "image/gif", "image/jpeg")
             (vm.thumbnail ?: vm.image).preferredImage(contentTypes)?.also { image ->
                 frescoImageLoader.load(
-                    itemView.image,
+                    binding.image,
                     vm.theme.background,
                     vm.theme.foreground,
                     image.width.toFloat(),

@@ -19,6 +19,7 @@ internal class MediaShareRequestDTOAdapter : JsonSerializer<MediaShareRequestDTO
             addProperty("platform", src.platform)
             addProperty("adWidth", src.adWidth)
             addProperty("adHeight", src.adHeight)
+            addProperty("userAgent", src.userAgent)
 
             when (src.feature) {
                 is MediaShareRequestDTO.Feature.Tags -> addProperty("feature", "tags")

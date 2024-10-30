@@ -11,13 +11,15 @@
 	<dimen name="duration_text_size">10sp</dimen>
 	<dimen name="duration_margin">4dp</dimen>
 	<dimen name="duration_padding">8dp</dimen>
+	<dimen name="title_padding">10dp</dimen>
 	<dimen name="duration_corner_radius">3dp</dimen>
+	<dimen name="audio_corner_radius">17dp</dimen>
 	<dimen name="category_horizontal_padding">9dp</dimen>
 	<dimen name="category_margin">4dp</dimen>
 	<dimen name="category_text_size">11sp</dimen>
 	<dimen name="error_buttons_margin">10dp</dimen>
 	<dimen name="card_background_stroke_size">1dp</dimen>
-	<dimen name="card_title_text_size">15sp</dimen>
+	<dimen name="title_text_size">15sp</dimen>
 	<dimen name="card_description_text_size">13sp</dimen>
 	<dimen name="card_width">292dp</dimen>
     <dimen name="autocomplete_height">51dp</dimen>
@@ -31,4 +33,7 @@
 	<dimen name="permission_buttons_margin">8dp</dimen>
     <dimen name="app_input_margin_start">16dp</dimen>
 	<dimen name="app_icon_margin">8dp</dimen>
+	<dimen name="audio_button_margin">6dp</dimen>
+	<dimen name="audio_button_padding">6dp</dimen>
+	<dimen name="audio_button_size">34dp</dimen>
 </resources>

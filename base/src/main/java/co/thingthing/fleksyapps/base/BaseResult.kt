@@ -42,9 +42,12 @@ sealed class BaseResult(
         val thumbnail: List<BaseMedia>?,
         val link: String?,
         val label: String?,
+        var isMuted: Boolean = true,
         source: Any?,
         theme: AppTheme
-    ) : BaseResult(source, theme, id)
+    ) : BaseResult(source, theme, id) {
+        fun mute() { isMuted = true }
+    }
 
     open class Card(
         source: Any? = null,

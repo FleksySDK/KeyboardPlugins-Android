@@ -6,11 +6,9 @@ import android.graphics.drawable.Drawable
 import android.provider.Settings
 import androidx.appcompat.content.res.AppCompatResources
 import co.thingthing.fleksyapps.base.BaseCategory
-import co.thingthing.fleksyapps.base.BaseConfiguration
 import co.thingthing.fleksyapps.base.BaseKeyboardApp
 import co.thingthing.fleksyapps.base.BaseResult
 import co.thingthing.fleksyapps.base.CustomCategory
-import co.thingthing.fleksyapps.base.ListMode
 import co.thingthing.fleksyapps.base.Pagination
 import co.thingthing.fleksyapps.base.Typefaces
 import co.thingthing.fleksyapps.core.KeyboardAppViewMode
@@ -87,9 +85,7 @@ class MediaShareApp(
     override val defaultMode: KeyboardAppViewMode
         get() = KeyboardAppViewMode.FullView
 
-    override val configuration by lazy {
-        BaseConfiguration(listMode = ListMode.VariableSize(2), requestLimit = 20)
-    }
+    override val configuration by lazy { MediaShareConfiguration.get() }
 
     override val defaultCategory
         get() =
@@ -118,9 +114,7 @@ class MediaShareApp(
             .subscribeOn(Schedulers.io()) // Ensure initial work is done on IO thread
             .observeOn(AndroidSchedulers.mainThread())
             .map { response ->
-                context?.let {
-                    toResults(it, response)
-                }
+                toResults(response)
             }
 
 
@@ -143,15 +137,14 @@ class MediaShareApp(
             .subscribeOn(Schedulers.io()) // Ensure initial work is done on IO thread
             .observeOn(AndroidSchedulers.mainThread())
             .map { response ->
-                context?.let { toResults(it, response, query) }
+                toResults(response, query)
             }
 
     private fun toResults(
-        context: Context,
         response: MediaShareResponse,
         sourceQuery: String? = null
     ): List<BaseResult> =
-        response.toResults(context, theme, contentType, sourceQuery)
+        response.toResults(theme, contentType, sourceQuery)
 
     private val remoteCategories
         get() = service.getTags(androidId)

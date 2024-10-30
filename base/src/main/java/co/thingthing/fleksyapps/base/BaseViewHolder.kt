@@ -15,4 +15,6 @@ abstract class BaseViewHolder<T : Any>(itemView: View) : RecyclerView.ViewHolder
     fun setClickSubject(subject: Subject<T>) {
         itemView.setOnClickListener { subject.onNext(viewModel) }
     }
+
+    open fun onRecycled() {}
 }

@@ -40,10 +40,10 @@ data class MediaShareResponse(
                 )
 
                 val fileForFinalContent: File?
-                    get() = hd ?: md ?: sm ?: xs ?: default
+                    get() = xs ?: sm ?: md ?: hd ?: default
 
                 val fileForThumbnailContent: File?
-                    get() = xs ?: sm ?: md ?: hd ?: default
+                    get() = sm ?: md ?: hd ?: default
             }
 
 
@@ -79,16 +79,12 @@ data class MediaShareResponse(
     }
 
     fun toResults(
-        context: Context,
         theme: AppTheme,
         contentType: MediaShareApp.ContentType,
         sourceQuery: String?
     ): List<BaseResult> {
-        val ads = advertisements.map {
-            it.toBaseResult(context, theme)
-        }
         val contents = contents.mapNotNull { it.toBaseResult(theme, contentType, sourceQuery) }
-        return ads + contents
+        return contents
     }
 
     companion object {

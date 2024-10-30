@@ -52,7 +52,9 @@ dependencies {
     api "com.facebook.fresco:fresco:3.2.0"
     api 'com.facebook.fresco:animated-gif:3.2.0'
     api 'com.facebook.fresco:animated-webp:3.2.0'
+    api 'com.facebook.fresco:animated-drawable:3.2.0'
     api 'com.facebook.fresco:webpsupport:3.2.0'
+    api "com.google.android.exoplayer:exoplayer:2.19.1"
 
     api "co.thingthing.fleksyapps:core:2.2.0"
 }

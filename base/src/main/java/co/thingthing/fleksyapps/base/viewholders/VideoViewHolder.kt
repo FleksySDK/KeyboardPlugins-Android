@@ -1,24 +1,24 @@
 package co.thingthing.fleksyapps.base.viewholders
 
-import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.view.View
+import androidx.annotation.OptIn
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
+import co.thingthing.fleksyapps.base.BaseMedia
 import co.thingthing.fleksyapps.base.BaseResult
 import co.thingthing.fleksyapps.base.BaseViewHolder
 import co.thingthing.fleksyapps.base.R
 import co.thingthing.fleksyapps.base.databinding.LayoutVideoItemBinding
 import co.thingthing.fleksyapps.base.utils.FrescoImageLoader
 import co.thingthing.fleksyapps.base.utils.preferredImage
-import com.facebook.fresco.animation.drawable.AnimationListener
-import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.Player
 
 class VideoViewHolder(
     private val binding: LayoutVideoItemBinding,
     private val onMuteClicked: (BaseResult) -> Unit,
 ) : BaseViewHolder<BaseResult>(binding.root) {
-    private val frescoImageLoader: FrescoImageLoader by lazy { FrescoImageLoader() }
     private var exoPlayer: ExoPlayer? = null
 
     override fun bind(viewModel: BaseResult) {
@@ -65,40 +65,50 @@ class VideoViewHolder(
     ) {
         item.video.preferredImage(contentTypes)?.also { video ->
             exoPlayer?.apply {
-                setMediaItem(MediaItem.fromUri(Uri.parse(video.url)))
-                repeatMode = Player.REPEAT_MODE_ALL
-                volume = item.getCurrentVolume()
-                prepare()
+                binding.root.post {
+                    preparePreview(video = video)
+                    preparePlayer(exoPlayer = this, item = item, video = video)
+                }
             }
         }
-        item.thumbnail?.preferredImage(contentTypes)?.also { video ->
-            frescoImageLoader.load(
-                binding.image,
-                item.theme.background,
-                item.theme.foreground,
-                video.width.toFloat(),
-                video.height.toFloat(),
-                video.url,
-                video.url,
-                object : AnimationListener {
-                    override fun onAnimationFrame(drawable: Drawable, frameNumber: Int) {}
-                    override fun onAnimationRepeat(drawable: Drawable) { syncSound(item) }
-                    override fun onAnimationStart(drawable: Drawable) { syncSound(item) }
-                    override fun onAnimationReset(drawable: Drawable) {}
-                    override fun onAnimationStop(drawable: Drawable) {}
-                },
-            )
-        }
     }
 
-    private fun syncSound(item: BaseResult.Video) {
-        exoPlayer?.run {
-            seekTo(0)
+    @OptIn(UnstableApi::class)
+    private fun preparePreview(video: BaseMedia) {
+        val height = binding.cardView.measuredHeight.toFloat()
+        val aspectRatio = video.width.toFloat() / video.height.toFloat()
+        val width = (height * aspectRatio).toInt()
+        binding.cardView.changeSize(width, height.toInt())
+        binding.image.changeSize(width, height.toInt())
+    }
+
+    private fun View.changeSize(width: Int, height: Int) {
+        val lp = layoutParams
+        lp.width = width
+        lp.height = height
+        layoutParams = lp
+    }
+
+    private fun preparePlayer(exoPlayer: ExoPlayer, item: BaseResult.Video, video: BaseMedia) {
+        exoPlayer.run {
+            addListener(object : Player.Listener {
+                override fun onPlaybackStateChanged(state: Int) {
+                    if (state == Player.STATE_READY) {
+                        binding.image.animate()
+                            .alpha(1f)
+                            .setDuration(FrescoImageLoader.FADE_DURATION.toLong())
+                            .start()
+                    }
+                }
+            })
+            binding.image.player = this
+            setMediaItem(MediaItem.fromUri(Uri.parse(video.url)))
+            repeatMode = Player.REPEAT_MODE_ALL
+            playWhenReady = true
             volume = item.getCurrentVolume()
-            play()
+            prepare()
         }
     }
-
     override fun onRecycled() {
         exoPlayer?.release()
         exoPlayer = null

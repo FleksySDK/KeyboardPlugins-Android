@@ -5,9 +5,11 @@ import android.view.ViewGroup
 import co.thingthing.fleksyapps.base.databinding.LayoutCardItemBinding
 import co.thingthing.fleksyapps.base.databinding.LayoutImageItemBinding
 import co.thingthing.fleksyapps.base.databinding.LayoutVideoItemBinding
+import co.thingthing.fleksyapps.base.databinding.LayoutVideoWithSoundItemBinding
 import co.thingthing.fleksyapps.base.viewholders.CardViewHolder
 import co.thingthing.fleksyapps.base.viewholders.ImageViewHolder
 import co.thingthing.fleksyapps.base.viewholders.VideoViewHolder
+import co.thingthing.fleksyapps.base.viewholders.VideoWithSoundViewHolder
 import co.thingthing.fleksyapps.core.AppTheme
 
 
@@ -20,10 +22,13 @@ class BaseResultAdapter : BaseAdapter<BaseResult>() {
                 binding = LayoutImageItemBinding.inflate(layoutInflater, parent, false)
             )
 
+            VIDEO_WITH_SOUND -> VideoWithSoundViewHolder(
+                binding = LayoutVideoWithSoundItemBinding.inflate(layoutInflater, parent, false),
+                onMuteClicked = { item -> onMuteClicked(item = item) }
+            )
+
             VIDEO -> VideoViewHolder(
                 binding = LayoutVideoItemBinding.inflate(layoutInflater, parent, false),
-                onMuteClicked = { item -> onMuteClicked(item = item) }
-
             )
 
             else -> CardViewHolder(
@@ -34,9 +39,9 @@ class BaseResultAdapter : BaseAdapter<BaseResult>() {
 
     private fun onMuteClicked(item: BaseResult) {
         items
-            .find { it is BaseResult.Video && it.id != item.id && it.isMuted.not() }
+            .find { it is BaseResult.VideoWithSound && it.id != item.id && it.isMuted.not() }
             ?.let {
-                (it as? BaseResult.Video)?.mute()
+                (it as? BaseResult.VideoWithSound)?.mute()
                 notifyItemChanged(items.indexOf(it))
             }
     }
@@ -44,6 +49,7 @@ class BaseResultAdapter : BaseAdapter<BaseResult>() {
     override fun getItemViewType(position: Int) =
         when (items[position]) {
             is BaseResult.Image -> IMAGE
+            is BaseResult.VideoWithSound -> VIDEO_WITH_SOUND
             is BaseResult.Video -> VIDEO
             is BaseResult.Card -> CARD
         }
@@ -61,7 +67,8 @@ class BaseResultAdapter : BaseAdapter<BaseResult>() {
     companion object {
         const val IMAGE = 1
         const val VIDEO = 2
-        const val CARD = 3
+        const val VIDEO_WITH_SOUND = 3
+        const val CARD = 4
     }
 
 

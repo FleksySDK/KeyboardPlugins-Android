@@ -40,7 +40,7 @@ data class MediaShareResponse(
                 )
 
                 val fileForFinalContent: File?
-                    get() = xs ?: sm ?: md ?: hd ?: default
+                    get() = hd ?: md ?: sm ?: xs ?: default
 
                 val fileForThumbnailContent: File?
                     get() = sm ?: md ?: hd ?: default
@@ -79,12 +79,16 @@ data class MediaShareResponse(
     }
 
     fun toResults(
+        context: Context,
         theme: AppTheme,
         contentType: MediaShareApp.ContentType,
         sourceQuery: String?
     ): List<BaseResult> {
+        val ads = advertisements.map {
+            it.toBaseResult(context, theme)
+        }
         val contents = contents.mapNotNull { it.toBaseResult(theme, contentType, sourceQuery) }
-        return contents
+        return if (contentType != MediaShareApp.ContentType.CLIPS) ads + contents else contents
     }
 
     companion object {
@@ -109,28 +113,53 @@ data class MediaShareResponse(
 
         return when (videoItemWithExtension.second) {
             EXTENSION_MP4 -> {
-                BaseResult.Video(
-                    video = listOf(
-                        BaseMedia(
-                            url = shareFile.url,
-                            width = shareFile.width,
-                            height = shareFile.height
-                        )
-                    ),
-                    thumbnail = listOf(
-                        BaseMedia(
-                            url = thumbnailFile.url,
-                            width = thumbnailFile.width,
-                            height = thumbnailFile.height,
-                        )
-                    ),
-                    link = shareFileURL,
-                    label = title,
-                    theme = theme,
-                    duration = null,
-                    source = this,
-                    id = id
-                )
+                if (contentType == MediaShareApp.ContentType.CLIPS) {
+                    BaseResult.VideoWithSound(
+                        video = listOf(
+                            BaseMedia(
+                                url = shareFile.url,
+                                width = shareFile.width,
+                                height = shareFile.height,
+                            )
+                        ),
+                        thumbnail = listOf(
+                            BaseMedia(
+                                url = thumbnailFile.url,
+                                width = thumbnailFile.width,
+                                height = thumbnailFile.height,
+                            )
+                        ),
+                        link = shareFileURL,
+                        label = title,
+                        theme = theme,
+                        duration = null,
+                        source = this,
+                        id = id
+                    )
+                } else {
+                    BaseResult.Video(
+                        video = listOf(
+                            BaseMedia(
+                                url = shareFile.url,
+                                width = shareFile.width,
+                                height = shareFile.height,
+                            )
+                        ),
+                        thumbnail = listOf(
+                            BaseMedia(
+                                url = thumbnailFile.url,
+                                width = thumbnailFile.width,
+                                height = thumbnailFile.height,
+                            )
+                        ),
+                        link = shareFileURL,
+                        label = title,
+                        theme = theme,
+                        duration = null,
+                        source = this,
+                        id = id
+                    )
+                }
             }
 
             else -> BaseResult.Image(
@@ -167,7 +196,7 @@ data class MediaShareResponse(
 
 private fun MediaShareResponse.Content.FileFormats.mediaItemForSharingContent(contentType: MediaShareApp.ContentType): MediaShareResponse.Content.FileFormats.MediaItem? {
     return when (contentType) {
-        MediaShareApp.ContentType.CLIPS -> mp4 ?: webp ?: gif
+        MediaShareApp.ContentType.CLIPS -> mp4
         MediaShareApp.ContentType.GIFS -> gif ?: webp ?: mp4
         MediaShareApp.ContentType.STICKERS -> webp ?: gif ?: mp4
     }

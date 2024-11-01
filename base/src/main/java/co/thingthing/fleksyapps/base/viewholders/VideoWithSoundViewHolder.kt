@@ -1,7 +1,7 @@
 package co.thingthing.fleksyapps.base.viewholders
 
 import android.net.Uri
-import android.widget.FrameLayout.LayoutParams
+import android.view.ViewGroup
 import androidx.core.view.updateLayoutParams
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -88,11 +88,11 @@ class VideoWithSoundViewHolder(
         val measuredHeight = cardHeight.toInt()
 
         binding.run {
-            image.updateLayoutParams<LayoutParams> {
+            image.updateLayoutParams<ViewGroup.LayoutParams> {
                 width = measuredWidth
                 height = measuredHeight
             }
-            cardView.updateLayoutParams<LayoutParams> {
+            cardView.updateLayoutParams<ViewGroup.LayoutParams> {
                 width = measuredWidth
                 height = measuredHeight
             }

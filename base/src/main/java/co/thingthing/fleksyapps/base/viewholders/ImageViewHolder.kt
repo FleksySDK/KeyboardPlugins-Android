@@ -16,8 +16,7 @@ class ImageViewHolder(
         super.bind(viewModel)
 
         (viewModel as? BaseResult.Image)?.also { vm ->
-            val contentTypes = listOf("image/webp", "video/mp4", "image/gif", "image/jpeg")
-            (vm.thumbnail ?: vm.image).preferredImage(contentTypes)?.also { image ->
+            (vm.thumbnail ?: vm.image).preferredImage(DEFAULT_CONTENT_TYPES)?.also { image ->
                 frescoImageLoader.load(
                     binding.image,
                     vm.theme.background,
@@ -26,7 +25,7 @@ class ImageViewHolder(
                     image.height.toFloat(),
                     image.url,
                     vm.placeholder?.preferredImage(
-                        contentTypes
+                        DEFAULT_CONTENT_TYPES
                     )?.url
                 )
             }

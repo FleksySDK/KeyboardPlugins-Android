@@ -42,6 +42,7 @@ data class MediaShareResponse(
                 val fileForFinalContent: File?
                     get() = hd ?: md ?: sm ?: xs ?: default
 
+                /** The MediaShare app should now show media of sm quality in thumbnails instead of xs */
                 val fileForThumbnailContent: File?
                     get() = sm ?: md ?: hd ?: default
             }
@@ -79,16 +80,12 @@ data class MediaShareResponse(
     }
 
     fun toResults(
-        context: Context,
         theme: AppTheme,
         contentType: MediaShareApp.ContentType,
         sourceQuery: String?
     ): List<BaseResult> {
-        val ads = advertisements.map {
-            it.toBaseResult(context, theme)
-        }
         val contents = contents.mapNotNull { it.toBaseResult(theme, contentType, sourceQuery) }
-        return if (contentType != MediaShareApp.ContentType.CLIPS) ads + contents else contents
+        return contents
     }
 
     companion object {
@@ -196,8 +193,9 @@ data class MediaShareResponse(
 
 private fun MediaShareResponse.Content.FileFormats.mediaItemForSharingContent(contentType: MediaShareApp.ContentType): MediaShareResponse.Content.FileFormats.MediaItem? {
     return when (contentType) {
-        MediaShareApp.ContentType.CLIPS -> mp4
+        MediaShareApp.ContentType.CLIPS -> mp4 ?: webp ?: gif
         MediaShareApp.ContentType.GIFS -> gif ?: webp ?: mp4
-        MediaShareApp.ContentType.STICKERS -> webp ?: gif ?: mp4
+        /** Pending to receive .mp4 for Stickers to be able to animate them */
+        MediaShareApp.ContentType.STICKERS -> mp4
     }
 }

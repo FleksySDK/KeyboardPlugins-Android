@@ -1,6 +1,7 @@
 package co.thingthing.fleksyapps.base.utils
 
 import android.content.Context
+import android.view.View
 import co.thingthing.fleksyapps.base.BaseMedia
 import java.util.UUID
 
@@ -27,3 +28,11 @@ fun Context.getInstallationUniqueId(): String {
     return uniqueID
 }
 // endregion
+
+fun View.hide() {
+    visibility = View.GONE
+}
+
+fun View.show() {
+    visibility = View.VISIBLE
+}

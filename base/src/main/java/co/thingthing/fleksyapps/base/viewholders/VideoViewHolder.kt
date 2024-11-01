@@ -15,8 +15,7 @@ class VideoViewHolder(private val binding: LayoutVideoItemBinding) :
     override fun bind(viewModel: BaseResult) {
         super.bind(viewModel)
         (viewModel as BaseResult.Video).let { vm ->
-            val contentTypes = listOf("image/webp", "video/mp4", "image/gif", "image/jpeg")
-            vm.thumbnail?.preferredImage(contentTypes)?.also { image ->
+            vm.thumbnail?.preferredImage(DEFAULT_CONTENT_TYPES)?.also { image ->
                 frescoImageLoader.load(
                     binding.image,
                     vm.theme.background,

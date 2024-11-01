@@ -17,4 +17,8 @@ abstract class BaseViewHolder<T : Any>(itemView: View) : RecyclerView.ViewHolder
     }
 
     open fun onRecycled() {}
+
+    companion object {
+        val DEFAULT_CONTENT_TYPES = listOf("image/webp", "video/mp4", "image/gif", "image/jpeg")
+    }
 }

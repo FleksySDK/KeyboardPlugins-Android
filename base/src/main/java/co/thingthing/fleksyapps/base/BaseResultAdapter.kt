@@ -37,12 +37,21 @@ class BaseResultAdapter : BaseAdapter<BaseResult>() {
         }
     }
 
-    private fun onMuteClicked(item: BaseResult) {
+    /**
+     * Mutes other video items with sound enabled, allowing only one item to have sound at a time.
+     *
+     * @param item the {@link BaseResult.VideoWithSound} item for which the mute action was triggered.
+     */
+    private fun onMuteClicked(item: BaseResult.VideoWithSound) {
         items
-            .find { it is BaseResult.VideoWithSound && it.id != item.id && it.isMuted.not() }
-            ?.let {
-                (it as? BaseResult.VideoWithSound)?.mute()
-                notifyItemChanged(items.indexOf(it))
+            .filterIsInstance<BaseResult.VideoWithSound>()
+            .find { it.id != item.id && it.isNotMuted() }
+            ?.apply {
+                mute()
+                val index = items.indexOf(this)
+                if (index != NOT_FOUND_INDEX) {
+                    notifyItemChanged(index)
+                }
             }
     }
 
@@ -69,6 +78,8 @@ class BaseResultAdapter : BaseAdapter<BaseResult>() {
         const val VIDEO = 2
         const val VIDEO_WITH_SOUND = 3
         const val CARD = 4
+
+        const val NOT_FOUND_INDEX = -1
     }
 
 

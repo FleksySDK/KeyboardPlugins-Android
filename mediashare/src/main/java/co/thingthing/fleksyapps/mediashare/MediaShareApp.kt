@@ -114,7 +114,7 @@ class MediaShareApp(
             .subscribeOn(Schedulers.io()) // Ensure initial work is done on IO thread
             .observeOn(AndroidSchedulers.mainThread())
             .map { response ->
-                context?.let { toResults(it, response) }
+                toResults(response)
             }
 
 
@@ -137,15 +137,14 @@ class MediaShareApp(
             .subscribeOn(Schedulers.io()) // Ensure initial work is done on IO thread
             .observeOn(AndroidSchedulers.mainThread())
             .map { response ->
-                context?.let { toResults(it, response, query) }
+                toResults(response, query)
             }
 
     private fun toResults(
-        context: Context,
         response: MediaShareResponse,
         sourceQuery: String? = null
     ): List<BaseResult> =
-        response.toResults(context, theme, contentType, sourceQuery)
+        response.toResults(theme, contentType, sourceQuery)
 
     private val remoteCategories
         get() = service.getTags(androidId)

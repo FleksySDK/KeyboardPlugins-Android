@@ -47,6 +47,7 @@ sealed class BaseResult(
         theme: AppTheme
     ) : Video(id, video, duration, thumbnail, link, label, source, theme) {
         fun mute() { isMuted = true }
+        fun isNotMuted() = isMuted.not()
     }
 
     open class Video(

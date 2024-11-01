@@ -5,8 +5,10 @@ internal data class MediaShareRequestDTO(
     val feature: Feature,
     val userId: String,
     val platform: String = "android",
-    val adWidth: Int = 100,
-    val adHeight: Int = 100
+    val adMinWidth: Int = 100,
+    val adMaxWidth: Int = 320,
+    val adMinHeight: Int = 100,
+    val adMaxHeight: Int = 250,
 ) {
 
     enum class ContentType(val requiredCapability: String) {
@@ -18,7 +20,8 @@ internal data class MediaShareRequestDTO(
     }
 
     sealed class Feature {
-        object Tags : Feature()
+        data object Tags : Feature()
+        data object HealthCheck : Feature()
 
         /**
          * Trending content.

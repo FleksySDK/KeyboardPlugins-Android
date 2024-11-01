@@ -17,10 +17,13 @@ internal class MediaShareRequestDTOAdapter : JsonSerializer<MediaShareRequestDTO
             addProperty("content", src.content.name)
             addProperty("userId", src.userId)
             addProperty("platform", src.platform)
-            addProperty("adWidth", src.adWidth)
-            addProperty("adHeight", src.adHeight)
+            addProperty("adMinWidth", src.adMinWidth)
+            addProperty("adMaxWidth", src.adMaxWidth)
+            addProperty("adMinHeight", src.adMinHeight)
+            addProperty("adMaxHeight", src.adMaxHeight)
 
             when (src.feature) {
+                is MediaShareRequestDTO.Feature.HealthCheck -> addProperty("feature", "preFillAds")
                 is MediaShareRequestDTO.Feature.Tags -> addProperty("feature", "tags")
                 is MediaShareRequestDTO.Feature.Trending -> {
                     addProperty("feature", "trending")

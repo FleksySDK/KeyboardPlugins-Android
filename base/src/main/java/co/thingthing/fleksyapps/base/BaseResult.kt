@@ -14,6 +14,7 @@ sealed class BaseResult(
     }
 
     open class Image(
+        override val id: String,
         val image: List<BaseMedia>,
         val thumbnail: List<BaseMedia>? = null,
         val placeholder: List<BaseMedia>? = null,
@@ -22,7 +23,7 @@ sealed class BaseResult(
         source: Any? = null,
         theme: AppTheme,
         sourceQuery: String? = null
-    ) : BaseResult(source, theme, sourceQuery) {
+    ) : BaseResult(source, theme, id, sourceQuery) {
 
         fun preferredImageFor(contentTypes: List<String>): BaseMedia? {
             val preferredContentType =
@@ -66,6 +67,6 @@ sealed class BaseResult(
         theme: AppTheme,
         val view: View,
         val url: String
-    ) : BaseResult(source, theme)
+    ) : BaseResult(source, theme, null)
 }
 

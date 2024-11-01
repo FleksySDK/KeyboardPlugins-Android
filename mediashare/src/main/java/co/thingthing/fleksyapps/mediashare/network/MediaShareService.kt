@@ -80,12 +80,12 @@ internal class MediaShareService(
     }
 
     fun sendImpression(
+        contentId: String,
         type: ImpressionType,
-        content: MediaShareResponse.Content
     ): Single<SimpleResultResponse> {
         val feature = when (type) {
-            ImpressionType.VIEW -> MediaShareRequestDTO.Feature.ViewTrigger(contentId = content.id)
-            ImpressionType.SHARE -> MediaShareRequestDTO.Feature.ShareTrigger(contentId = content.id)
+            ImpressionType.VIEW -> MediaShareRequestDTO.Feature.ViewTrigger(contentId = contentId)
+            ImpressionType.SHARE -> MediaShareRequestDTO.Feature.ShareTrigger(contentId = contentId)
         }
 
         val requestDTO = MediaShareRequestDTO(

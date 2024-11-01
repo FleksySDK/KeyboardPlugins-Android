@@ -107,6 +107,16 @@ class MediaShareApp(
         } ?: ""
     }
 
+    override fun onItemSelected(result: BaseResult) {
+        super.onItemSelected(result)
+        result.id?.let { id ->
+            service.sendImpression(
+                contentId = id,
+                type = MediaShareService.ImpressionType.SHARE,
+            )
+        }
+    }
+
     override fun default(pagination: Pagination): Single<List<BaseResult>> =
         service.getContent(
             MediaShareService.Content.Trending(pagination.page)

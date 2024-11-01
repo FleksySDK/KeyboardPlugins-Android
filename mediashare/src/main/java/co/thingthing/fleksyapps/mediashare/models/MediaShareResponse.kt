@@ -189,7 +189,8 @@ data class MediaShareResponse(
                 link = shareFileURL,
                 label = title,
                 theme = theme,
-                sourceQuery = sourceQuery
+                sourceQuery = sourceQuery,
+                id = id,
             )
         }
     }

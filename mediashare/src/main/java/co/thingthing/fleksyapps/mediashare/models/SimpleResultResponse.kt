@@ -1,5 +1,5 @@
 package co.thingthing.fleksyapps.mediashare.models
 
-data class HealthCheckResponse(
+data class SimpleResultResponse(
     val result: Boolean
 )

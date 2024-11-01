@@ -17,25 +17,37 @@ internal class MediaShareRequestDTOAdapter : JsonSerializer<MediaShareRequestDTO
             addProperty("content", src.content.name)
             addProperty("userId", src.userId)
             addProperty("platform", src.platform)
-            addProperty("adMinWidth", src.adMinWidth)
-            addProperty("adMaxWidth", src.adMaxWidth)
-            addProperty("adMinHeight", src.adMinHeight)
-            addProperty("adMaxHeight", src.adMaxHeight)
+
+            val requiresAdsParameters: Boolean
 
             when (src.feature) {
-                is MediaShareRequestDTO.Feature.HealthCheck -> addProperty("feature", "preFillAds")
-                is MediaShareRequestDTO.Feature.Tags -> addProperty("feature", "tags")
+                is MediaShareRequestDTO.Feature.HealthCheck -> {
+                    addProperty("feature", "preFillAds")
+                    requiresAdsParameters = true
+                }
+                is MediaShareRequestDTO.Feature.Tags -> {
+                    addProperty("feature", "tags")
+                    requiresAdsParameters = false
+                }
                 is MediaShareRequestDTO.Feature.Trending -> {
                     addProperty("feature", "trending")
                     addProperty("page", src.feature.page)
+                    requiresAdsParameters = true
                 }
-
                 is MediaShareRequestDTO.Feature.Search -> {
                     addProperty("feature", "search")
                     val searchFeature = src.feature
                     addProperty("keyword", searchFeature.query)
                     addProperty("page", searchFeature.page)
+                    requiresAdsParameters = true
                 }
+            }
+
+            if (requiresAdsParameters) {
+                addProperty("adMinWidth", src.adMinWidth)
+                addProperty("adMaxWidth", src.adMaxWidth)
+                addProperty("adMinHeight", src.adMinHeight)
+                addProperty("adMaxHeight", src.adMaxHeight)
             }
         }
         return jsonObject

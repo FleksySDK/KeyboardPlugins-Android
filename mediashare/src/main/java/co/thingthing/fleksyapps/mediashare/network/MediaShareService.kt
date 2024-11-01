@@ -1,6 +1,6 @@
 package co.thingthing.fleksyapps.mediashare.network
 
-import co.thingthing.fleksyapps.mediashare.models.HealthCheckResponse
+import co.thingthing.fleksyapps.mediashare.models.SimpleResultResponse
 import co.thingthing.fleksyapps.mediashare.models.MediaShareResponse
 import co.thingthing.fleksyapps.mediashare.models.PopularTagsResponse
 import co.thingthing.fleksyapps.mediashare.network.models.MediaShareRequestDTO
@@ -62,7 +62,7 @@ internal class MediaShareService(
         return service.getPopularTags(getHeadersMap(), requestDTO)
     }
 
-    private fun performHealthCheckRequestIfNeeded(): Single<HealthCheckResponse> {
+    private fun performHealthCheckRequestIfNeeded(): Single<SimpleResultResponse> {
         val requestDTO = MediaShareRequestDTO(
             contentType,
             MediaShareRequestDTO.Feature.HealthCheck,

@@ -37,6 +37,12 @@ internal interface MediaShareApi {
         @Body request: MediaShareRequestDTO
     ): Single<SimpleResultResponse>
 
+    @POST("routing")
+    fun sendImpression(
+        @HeaderMap headers: Map<String, String>,
+        @Body request: MediaShareRequestDTO
+    ): Single<SimpleResultResponse>
+
     companion object {
         private const val BASE_URL =
             "https://api.thingthing.co/plugins/api/v1/"

@@ -41,6 +41,16 @@ internal class MediaShareRequestDTOAdapter : JsonSerializer<MediaShareRequestDTO
                     addProperty("page", searchFeature.page)
                     requiresAdsParameters = true
                 }
+                is MediaShareRequestDTO.Feature.ViewTrigger -> {
+                    addProperty("feature", "viewTrigger")
+                    addProperty("contentId", src.feature.contentId)
+                    requiresAdsParameters = false
+                }
+                is MediaShareRequestDTO.Feature.ShareTrigger -> {
+                    addProperty("feature", "shareTrigger")
+                    addProperty("contentId", src.feature.contentId)
+                    requiresAdsParameters = false
+                }
             }
 
             if (requiresAdsParameters) {

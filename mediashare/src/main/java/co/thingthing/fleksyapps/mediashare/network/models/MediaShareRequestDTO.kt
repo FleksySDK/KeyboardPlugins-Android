@@ -35,5 +35,17 @@ internal data class MediaShareRequestDTO(
          * @param query: The query String  for finding relevant content.
          */
         data class Search(val page: Int, val query: String) : Feature()
+
+        /**
+         * Content displayed to the user.
+         * @param contentId: The ID of the content displayed to the user.
+         */
+        data class ViewTrigger(val contentId: String) : Feature()
+
+        /**
+         * Content selected by the user for sharing.
+         * @param contentId: The ID of the content displayed to the user.
+         */
+        data class ShareTrigger(val contentId: String) : Feature()
     }
 }

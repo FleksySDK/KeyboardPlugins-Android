@@ -133,7 +133,7 @@ data class MediaShareResponse(
                     theme = theme,
                     duration = null,
                     source = this,
-                    id = id
+                    id = id,
                 )
             }
 
@@ -163,7 +163,8 @@ data class MediaShareResponse(
                 link = shareFileURL,
                 label = title,
                 theme = theme,
-                sourceQuery = sourceQuery
+                sourceQuery = sourceQuery,
+                id = id,
             )
         }
     }

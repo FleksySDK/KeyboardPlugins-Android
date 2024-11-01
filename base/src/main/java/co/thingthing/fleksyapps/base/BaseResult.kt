@@ -35,19 +35,30 @@ sealed class BaseResult(
         }
     }
 
-    open class Video(
+    open class VideoWithSound(
         override val id: String? = null,
-        val video: List<BaseMedia>,
-        val duration: Long?,
-        val thumbnail: List<BaseMedia>?,
-        val link: String?,
-        val label: String?,
+        override val video: List<BaseMedia>,
+        override val duration: Long?,
+        override val thumbnail: List<BaseMedia>?,
+        override val link: String?,
+        override val label: String?,
         var isMuted: Boolean = true,
         source: Any?,
         theme: AppTheme
-    ) : BaseResult(source, theme, id) {
+    ) : Video(id, video, duration, thumbnail, link, label, source, theme) {
         fun mute() { isMuted = true }
     }
+
+    open class Video(
+        override val id: String? = null,
+        open val video: List<BaseMedia>,
+        open val duration: Long?,
+        open val thumbnail: List<BaseMedia>?,
+        open val link: String?,
+        open val label: String?,
+        source: Any?,
+        theme: AppTheme
+    ) : BaseResult(source, theme, id)
 
     open class Card(
         source: Any? = null,

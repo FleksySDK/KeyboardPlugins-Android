@@ -28,6 +28,11 @@ internal class MediaShareService(
         class Search(val query: String, page: Int) : Content(page)
     }
 
+    enum class ImpressionType {
+        VIEW,
+        SHARE
+    }
+
     private val service by lazy { MediaShareApi.create() }
 
     fun getContent(
@@ -60,6 +65,22 @@ internal class MediaShareService(
         )
 
         return service.getPopularTags(getHeadersMap(), requestDTO)
+    }
+
+    fun sendImpression(
+        type: ImpressionType,
+        content: MediaShareResponse.Content
+    ): Single<SimpleResultResponse> {
+        val feature = when (type) {
+            ImpressionType.VIEW -> MediaShareRequestDTO.Feature.ViewTrigger(contentId = content.id)
+            ImpressionType.SHARE -> MediaShareRequestDTO.Feature.ShareTrigger(contentId = content.id)
+        }
+
+        val requestDTO = MediaShareRequestDTO(
+            contentType, feature, userId
+        )
+
+        return service.sendImpression(getHeadersMap(), requestDTO)
     }
 
     private fun performHealthCheckRequestIfNeeded(): Single<SimpleResultResponse> {

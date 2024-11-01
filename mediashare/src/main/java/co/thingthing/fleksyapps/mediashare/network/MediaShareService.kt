@@ -1,5 +1,6 @@
 package co.thingthing.fleksyapps.mediashare.network
 
+import co.thingthing.fleksyapps.mediashare.models.HealthCheckResponse
 import co.thingthing.fleksyapps.mediashare.models.MediaShareResponse
 import co.thingthing.fleksyapps.mediashare.models.PopularTagsResponse
 import co.thingthing.fleksyapps.mediashare.network.models.MediaShareRequestDTO
@@ -32,6 +33,8 @@ internal class MediaShareService(
     fun getContent(
         content: Content
     ): Single<MediaShareResponse> {
+        performHealthCheckRequestIfNeeded()
+
         val feature = when (content) {
             is Content.Trending -> MediaShareRequestDTO.Feature.Trending(page = content.page+1)
             is Content.Search -> MediaShareRequestDTO.Feature.Search(
@@ -47,7 +50,9 @@ internal class MediaShareService(
         return service.getContent(getHeadersMap(), requestDTO)
     }
 
-    fun getTags(userId: String):Single<PopularTagsResponse> {
+    fun getTags(userId: String): Single<PopularTagsResponse> {
+        performHealthCheckRequestIfNeeded()
+
         val requestDTO = MediaShareRequestDTO(
             contentType,
             MediaShareRequestDTO.Feature.Tags,
@@ -55,6 +60,16 @@ internal class MediaShareService(
         )
 
         return service.getPopularTags(getHeadersMap(), requestDTO)
+    }
+
+    private fun performHealthCheckRequestIfNeeded(): Single<HealthCheckResponse> {
+        val requestDTO = MediaShareRequestDTO(
+            contentType,
+            MediaShareRequestDTO.Feature.HealthCheck,
+            userId
+        )
+
+        return service.getHealthCheck(getHeadersMap(), requestDTO)
     }
 
     private fun getHeadersMap(): Map<String, String> = mapOf(

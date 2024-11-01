@@ -1,6 +1,7 @@
 package co.thingthing.fleksyapps.mediashare.network
 
 import co.thingthing.fleksyapps.base.BaseComponent
+import co.thingthing.fleksyapps.mediashare.models.HealthCheckResponse
 import co.thingthing.fleksyapps.mediashare.models.MediaShareResponse
 import co.thingthing.fleksyapps.mediashare.models.PopularTagsResponse
 import co.thingthing.fleksyapps.mediashare.network.models.MediaShareRequestDTO
@@ -29,6 +30,12 @@ internal interface MediaShareApi {
         @HeaderMap headers: Map<String, String>,
         @Body request: MediaShareRequestDTO
     ): Single<PopularTagsResponse>
+
+    @POST("routing")
+    fun getHealthCheck(
+        @HeaderMap headers: Map<String, String>,
+        @Body request: MediaShareRequestDTO
+    ): Single<HealthCheckResponse>
 
     companion object {
         private const val BASE_URL =

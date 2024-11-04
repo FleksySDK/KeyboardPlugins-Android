@@ -80,12 +80,16 @@ data class MediaShareResponse(
     }
 
     fun toResults(
+        context: Context,
         theme: AppTheme,
         contentType: MediaShareApp.ContentType,
         sourceQuery: String?
     ): List<BaseResult> {
+        val ads = advertisements.map {
+            it.toBaseResult(context, theme)
+        }
         val contents = contents.mapNotNull { it.toBaseResult(theme, contentType, sourceQuery) }
-        return contents
+        return ads + contents
     }
 
     companion object {

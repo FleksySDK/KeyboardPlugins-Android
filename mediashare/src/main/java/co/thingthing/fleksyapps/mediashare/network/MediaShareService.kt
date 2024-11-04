@@ -1,10 +1,11 @@
 package co.thingthing.fleksyapps.mediashare.network
 
-import co.thingthing.fleksyapps.mediashare.models.SimpleResultResponse
+import android.os.SystemClock
 import co.thingthing.fleksyapps.mediashare.models.MediaShareResponse
 import co.thingthing.fleksyapps.mediashare.models.PopularTagsResponse
 import co.thingthing.fleksyapps.mediashare.network.models.MediaShareRequestDTO
 import io.reactivex.Single
+import java.util.concurrent.TimeUnit.MINUTES
 
 internal class MediaShareService(
     private val contentType: MediaShareRequestDTO.ContentType,
@@ -12,6 +13,16 @@ internal class MediaShareService(
     private val sdkLicenseId: String,
     private val userId: String
 ) {
+
+    private var lastRequestTime: Long = 0
+
+    companion object {
+        val HEALTH_CHECK_MIN_WAIT_TIME = MINUTES.toMillis(10)
+    }
+
+    init {
+        performHealthCheckRequestIfNeeded()
+    }
 
     sealed class Content(val page: Int) {
         /**
@@ -62,14 +73,20 @@ internal class MediaShareService(
         return service.getPopularTags(getHeadersMap(), requestDTO)
     }
 
-    private fun performHealthCheckRequestIfNeeded(): Single<SimpleResultResponse> {
-        val requestDTO = MediaShareRequestDTO(
-            contentType,
-            MediaShareRequestDTO.Feature.HealthCheck,
-            userId
-        )
+    private fun performHealthCheckRequestIfNeeded() {
+        val currentTime = SystemClock.elapsedRealtime()
 
-        return service.getHealthCheck(getHeadersMap(), requestDTO)
+        if (currentTime - lastRequestTime >= HEALTH_CHECK_MIN_WAIT_TIME) {
+            lastRequestTime = currentTime
+            val requestDTO = MediaShareRequestDTO(
+                contentType,
+                MediaShareRequestDTO.Feature.HealthCheck,
+                userId
+            )
+            service.getHealthCheck(getHeadersMap(), requestDTO)
+        } else {
+            // Too soon to make a new health check request
+        }
     }
 
     private fun getHeadersMap(): Map<String, String> = mapOf(

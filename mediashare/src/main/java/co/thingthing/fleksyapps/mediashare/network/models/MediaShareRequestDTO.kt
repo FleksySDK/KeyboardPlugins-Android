@@ -6,7 +6,8 @@ internal data class MediaShareRequestDTO(
     val userId: String,
     val platform: String = "android",
     val adWidth: Int = 100,
-    val adHeight: Int = 100
+    val adHeight: Int = 100,
+    val userAgent: String = ""
 ) {
 
     enum class ContentType(val requiredCapability: String) {

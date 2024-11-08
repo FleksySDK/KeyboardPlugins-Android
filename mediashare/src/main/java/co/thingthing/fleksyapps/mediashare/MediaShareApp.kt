@@ -15,6 +15,7 @@ import co.thingthing.fleksyapps.core.KeyboardAppViewMode
 import co.thingthing.fleksyapps.mediashare.models.MediaShareResponse
 import co.thingthing.fleksyapps.mediashare.models.toCategories
 import co.thingthing.fleksyapps.mediashare.network.MediaShareService
+import co.thingthing.fleksyapps.mediashare.network.getUserAgent
 import co.thingthing.fleksyapps.mediashare.network.toNetworkContentType
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -201,7 +202,8 @@ class MediaShareApp(
             contentType = contentType.toNetworkContentType(),
             mediaShareApiKey = apiKey,
             sdkLicenseId = sdkLicenseKey,
-            userId = androidId
+            userAgent = context.getUserAgent(),
+            userId = androidId,
         )
     }
 

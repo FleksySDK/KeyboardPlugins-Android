@@ -12,7 +12,8 @@ internal class MediaShareService(
     private val contentType: MediaShareRequestDTO.ContentType,
     private val mediaShareApiKey: String,
     private val sdkLicenseId: String,
-    private val userId: String
+    private val userAgent: String,
+    private val userId: String,
 ) {
 
     private val service by lazy { MediaShareApi.create() }
@@ -60,7 +61,10 @@ internal class MediaShareService(
         }
 
         val requestDTO = MediaShareRequestDTO(
-            contentType, feature, userId
+            content = contentType,
+            feature = feature,
+            userId = userId,
+            userAgent = userAgent,
         )
 
         return service.getContent(getHeadersMap(), requestDTO)
@@ -70,9 +74,10 @@ internal class MediaShareService(
         performHealthCheckRequestIfNeeded()
 
         val requestDTO = MediaShareRequestDTO(
-            contentType,
-            MediaShareRequestDTO.Feature.Tags,
-            userId
+            content = contentType,
+            feature = MediaShareRequestDTO.Feature.Tags,
+            userId = userId,
+            userAgent = userAgent,
         )
 
         return service.getPopularTags(getHeadersMap(), requestDTO)

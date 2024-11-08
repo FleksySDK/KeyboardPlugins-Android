@@ -15,6 +15,7 @@ internal class MediaShareService(
     private val userId: String
 ) {
 
+    private val service by lazy { MediaShareApi.create() }
     private var lastRequestTime: Long = 0
 
     companion object {
@@ -44,8 +45,6 @@ internal class MediaShareService(
         VIEW,
         SHARE
     }
-
-    private val service by lazy { MediaShareApi.create() }
 
     fun getContent(
         content: Content

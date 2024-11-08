@@ -27,7 +27,7 @@ class FrescoImageLoader {
         width: Float,
         height: Float,
         url: String,
-        lowResUrl: String?,
+        lowResUrl: String?
     ) {
         with(view) {
             hierarchy.fadeDuration = FADE_DURATION

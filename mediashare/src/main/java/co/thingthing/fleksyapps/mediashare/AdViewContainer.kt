@@ -29,12 +29,14 @@ class AdViewContainer @JvmOverloads constructor(
     private val aspectRatio: Float = adContent.width.toFloat() / adContent.height.toFloat()
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val calculatedWidth = (height * aspectRatio).toInt()
+        val calculatedHeight = MeasureSpec.getSize(heightMeasureSpec)
+        val calculatedWidth = (calculatedHeight * aspectRatio).toInt()
+
         val height: Int
         val width: Int
         if (calculatedWidth <= maxWidth) {
-            height = MeasureSpec.getSize(heightMeasureSpec)
-            width = (height * aspectRatio).toInt()
+            height = calculatedHeight
+            width = calculatedWidth
         } else {
             /**
              * If the ad’s width is greater than the screen width,

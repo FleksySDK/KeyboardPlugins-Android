@@ -9,6 +9,7 @@ import android.graphics.drawable.GradientDrawable
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewTreeObserver
 import android.view.accessibility.AccessibilityEvent
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
@@ -312,16 +313,20 @@ abstract class BaseKeyboardApp : KeyboardApp {
     private fun calculateCarouselHeight(onSuccess: () -> Unit) {
         var isReturned = false
         if (isFullView()) {
-            fullViewBinding.root.viewTreeObserver.addOnGlobalLayoutListener {
+            var globalLayoutListener: ViewTreeObserver.OnGlobalLayoutListener? = null
+            globalLayoutListener = ViewTreeObserver.OnGlobalLayoutListener {
                 val recyclerView = fullViewBinding.fullViewAppItems
                 val height = recyclerView.height.pxToDp()
+
                 carouselWidthPx = recyclerView.width - (carouselWidthPaddingPx)
                 if (isReturned.not() && height >= minCarouselHeight) {
                     carouselHeight = height
                     onSuccess()
                     isReturned = true
+                    fullViewBinding.root.viewTreeObserver.removeOnGlobalLayoutListener(globalLayoutListener)
                 }
             }
+            fullViewBinding.root.viewTreeObserver.addOnGlobalLayoutListener(globalLayoutListener)
         } else {
             carouselHeight = minCarouselHeight
             onSuccess()

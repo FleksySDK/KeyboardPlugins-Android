@@ -66,11 +66,11 @@ class MediaShareApp(
     override val appName: String
         get() {
             val appIdSuffix = when (contentType) {
-                ContentType.CLIPS -> "Clips"
-                ContentType.GIFS -> "Gifs"
-                ContentType.STICKERS -> "Stickers"
+                ContentType.CLIPS -> "clips"
+                ContentType.GIFS -> "gifs"
+                ContentType.STICKERS -> "stickers"
             }
-            return "MediaShare $appIdSuffix"
+            return appIdSuffix
         }
     override val keywords: List<String>
         get() {
@@ -120,7 +120,8 @@ class MediaShareApp(
 
     override fun default(pagination: Pagination): Single<List<BaseResult>> =
         service.getContent(
-            MediaShareService.Content.Trending(pagination.page)
+            content = MediaShareService.Content.Trending(pagination.page),
+            adMaxHeight = carouselHeight
         )
             .subscribeOn(Schedulers.io()) // Ensure initial work is done on IO thread
             .observeOn(AndroidSchedulers.mainThread())
@@ -145,7 +146,8 @@ class MediaShareApp(
 
     private fun search(query: String, pagination: Pagination): Single<List<BaseResult>> =
         service.getContent(
-            MediaShareService.Content.Search(query = query, pagination.page)
+            content = MediaShareService.Content.Search(query = query, pagination.page),
+            adMaxHeight = carouselHeight
         )
             .subscribeOn(Schedulers.io()) // Ensure initial work is done on IO thread
             .observeOn(AndroidSchedulers.mainThread())
@@ -158,25 +160,21 @@ class MediaShareApp(
         response: MediaShareResponse,
         sourceQuery: String? = null
     ): List<BaseResult> =
-        response.toResults(context, theme, contentType, sourceQuery)
+        response.toResults(
+            context = context,
+            theme = theme,
+            contentType = contentType,
+            sourceQuery = sourceQuery,
+            maxWidth = carouselWidthPx
+        )
 
     private val remoteCategories
-        get() = service.getTags(androidId)
-            .map { category ->
-                category.toCategories(appTheme = theme, typeface = customTypefaces?.bold)
-            }.onErrorResumeNext(localCategories)
-
-
-    private val localCategories
-        get() = Single.just(
-            FIXED_CATEGORIES.map { label ->
-                BaseCategory(
-                    label,
-                    theme,
-                    typeface = customTypefaces?.bold
-                )
-            }
-        )
+        get() = service.getTags(
+            userId = androidId,
+            adMaxHeight = carouselHeight
+        ).map { category ->
+            category.toCategories(appTheme = theme, typeface = customTypefaces?.bold)
+        }
 
     private val customCategories: Single<List<BaseCategory>>?
         get() =
@@ -209,8 +207,5 @@ class MediaShareApp(
 
     companion object {
         private const val MEDIA_SHARE_TRENDING = "Trending"
-
-        val FIXED_CATEGORIES =
-            listOf("Trending", "Happy", "Love", "Lol", "Okay", "Thanks", "Wow", "Hello", "Sad")
     }
 }

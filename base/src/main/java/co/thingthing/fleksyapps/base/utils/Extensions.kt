@@ -1,6 +1,7 @@
 package co.thingthing.fleksyapps.base.utils
 
 import android.content.Context
+import android.content.res.Resources
 import android.view.View
 import co.thingthing.fleksyapps.base.BaseMedia
 import java.util.UUID
@@ -36,3 +37,10 @@ fun View.hide() {
 fun View.show() {
     visibility = View.VISIBLE
 }
+
+/**
+ * Converts a pixel value to density-independent pixels (dp).
+ *
+ * @return The equivalent value in dp as an integer.
+ */
+fun Int.pxToDp(): Int = (this / Resources.getSystem().displayMetrics.density).toInt()

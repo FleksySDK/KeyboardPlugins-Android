@@ -8,9 +8,17 @@ internal data class MediaShareRequestDTO(
     val adMinWidth: Int = 100,
     val adMaxWidth: Int = 320,
     val adMinHeight: Int = 100,
-    val adMaxHeight: Int = 250,
+    val adMaxHeight: Int = ALL_SIZES_ADS_HEIGHT,
     val userAgent: String = ""
 ) {
+
+    companion object {
+        /**
+         * Maximum ads height
+         * With this value, all possible ad sizes will be preloaded.
+         */
+        const val ALL_SIZES_ADS_HEIGHT = 320
+    }
 
     enum class ContentType(val requiredCapability: String) {
         Clips("fleksyapp_clips"),

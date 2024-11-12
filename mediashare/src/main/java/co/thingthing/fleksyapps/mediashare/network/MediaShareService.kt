@@ -5,6 +5,7 @@ import co.thingthing.fleksyapps.mediashare.models.MediaShareResponse
 import co.thingthing.fleksyapps.mediashare.models.PopularTagsResponse
 import co.thingthing.fleksyapps.mediashare.models.SimpleResultResponse
 import co.thingthing.fleksyapps.mediashare.network.models.MediaShareRequestDTO
+import co.thingthing.fleksyapps.mediashare.network.models.MediaShareRequestDTO.Companion.ALL_SIZES_ADS_HEIGHT
 import io.reactivex.Single
 import java.util.concurrent.TimeUnit.MINUTES
 
@@ -48,7 +49,8 @@ internal class MediaShareService(
     }
 
     fun getContent(
-        content: Content
+        content: Content,
+        adMaxHeight: Int,
     ): Single<MediaShareResponse> {
         performHealthCheckRequestIfNeeded()
 
@@ -65,12 +67,16 @@ internal class MediaShareService(
             feature = feature,
             userId = userId,
             userAgent = userAgent,
+            adMaxHeight = adMaxHeight,
         )
 
         return service.getContent(getHeadersMap(), requestDTO)
     }
 
-    fun getTags(userId: String): Single<PopularTagsResponse> {
+    fun getTags(
+        userId: String,
+        adMaxHeight: Int,
+    ): Single<PopularTagsResponse> {
         performHealthCheckRequestIfNeeded()
 
         val requestDTO = MediaShareRequestDTO(
@@ -78,6 +84,7 @@ internal class MediaShareService(
             feature = MediaShareRequestDTO.Feature.Tags,
             userId = userId,
             userAgent = userAgent,
+            adMaxHeight = adMaxHeight,
         )
 
         return service.getPopularTags(getHeadersMap(), requestDTO)
@@ -93,7 +100,10 @@ internal class MediaShareService(
         }
 
         val requestDTO = MediaShareRequestDTO(
-            contentType, feature, userId
+            content = contentType,
+            feature = feature,
+            userAgent = userAgent,
+            userId = userId,
         )
 
         return service.sendImpression(getHeadersMap(), requestDTO)
@@ -105,9 +115,11 @@ internal class MediaShareService(
         if (currentTime - lastRequestTime >= HEALTH_CHECK_MIN_WAIT_TIME) {
             lastRequestTime = currentTime
             val requestDTO = MediaShareRequestDTO(
-                contentType,
-                MediaShareRequestDTO.Feature.HealthCheck,
-                userId
+                content = contentType,
+                feature = MediaShareRequestDTO.Feature.HealthCheck,
+                userAgent = userAgent,
+                userId = userId,
+                adMaxHeight = ALL_SIZES_ADS_HEIGHT
             )
             service.getHealthCheck(getHeadersMap(), requestDTO)
         } else {

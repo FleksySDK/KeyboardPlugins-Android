@@ -10,7 +10,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/container"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/base_frame_height"
+        android:layout_height="wrap_content"
         android:clickable="true"
         android:clipChildren="true"
         android:focusable="true">
@@ -20,9 +20,11 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/appItems"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_marginTop="@dimen/base_carousel_margin"
+            android:layout_marginBottom="@dimen/base_carousel_margin"
+            android:layout_height="@dimen/base_carousel_height"
             android:clipToPadding="false"
-            android:padding="2dp"
+            android:padding="@dimen/base_carousel_padding"
             app:layout_constraintBottom_toTopOf="@+id/appCategories"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -38,17 +40,6 @@
 
         <!-- Categories -->
 
-        <ImageButton
-            android:id="@+id/zoomViewButton"
-            android:layout_width="@dimen/base_categories_height"
-            android:layout_height="@dimen/base_categories_height"
-            android:layout_marginBottom="4dp"
-            android:clipToPadding="false"
-            android:padding="2dp"
-            android:src="@drawable/ic_expand_view"
-            app:layout_constraintBottom_toTopOf="@+id/appIcon"
-            app:layout_constraintStart_toStartOf="parent" />
-
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/appCategories"
             android:layout_width="0dp"
@@ -56,9 +47,10 @@
             android:layout_marginBottom="4dp"
             android:clipToPadding="false"
             android:padding="2dp"
+            android:visibility="gone"
             app:layout_constraintBottom_toTopOf="@+id/appIcon"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/zoomViewButton" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <!-- Search bar -->
 

@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<!-- panels -->
-	<dimen name="base_frame_height">248dp</dimen>
 	<dimen name="base_search_height">52dp</dimen>
 	<dimen name="base_icon_size">32dp</dimen>
 	<dimen name="base_search_text_size">21sp</dimen>
-	<dimen name="base_categories_height">36dp</dimen>
+	<dimen name="base_categories_height">44dp</dimen>
+	<dimen name="base_carousel_height">100dp</dimen>
+	<dimen name="base_carousel_margin">1dp</dimen>
+	<dimen name="base_carousel_padding">2dp</dimen>
 	<dimen name="base_card_radius">4dp</dimen>
 	<dimen name="base_card_margin">2dp</dimen>
 	<dimen name="duration_text_size">10sp</dimen>

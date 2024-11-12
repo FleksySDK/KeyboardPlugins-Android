@@ -14,7 +14,8 @@ class AdViewContainer @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = 0,
-    adContent: MediaShareResponse.Advertisement
+    adContent: MediaShareResponse.Advertisement,
+    val maxWidth: Int,
 ) : FrameLayout(context, attrs, defStyle) {
 
     private val binding: ItemAdViewBinding =
@@ -28,8 +29,21 @@ class AdViewContainer @JvmOverloads constructor(
     private val aspectRatio: Float = adContent.width.toFloat() / adContent.height.toFloat()
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val height = MeasureSpec.getSize(heightMeasureSpec)
-        val width = (height * aspectRatio).toInt()
+        val calculatedWidth = (height * aspectRatio).toInt()
+        val height: Int
+        val width: Int
+        if (calculatedWidth <= maxWidth) {
+            height = MeasureSpec.getSize(heightMeasureSpec)
+            width = (height * aspectRatio).toInt()
+        } else {
+            /**
+             * If the ad’s width is greater than the screen width,
+             * then we resize the ad (preserving the aspect ratio),
+             * so that its width matches the screen
+             */
+            height = (maxWidth / aspectRatio).toInt()
+            width = maxWidth
+        }
 
         val widthSpec = MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY)
 

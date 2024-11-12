@@ -8,6 +8,7 @@ import co.thingthing.fleksyapps.base.BaseResult
 import co.thingthing.fleksyapps.core.AppTheme
 import co.thingthing.fleksyapps.mediashare.AdViewContainer
 import co.thingthing.fleksyapps.mediashare.MediaShareApp
+import kotlin.random.Random
 
 data class MediaShareResponse(
     val contents: List<Content>,
@@ -70,26 +71,61 @@ data class MediaShareResponse(
         val height: Int,
         @ColorInt val backgroundColor: Int = Color.TRANSPARENT
     ) {
-        fun toBaseResult(context: Context, appTheme: AppTheme): BaseResult {
+        fun toBaseResult(context: Context, appTheme: AppTheme, maxWidth: Int): BaseResult {
             return BaseResult.Card(
                 theme = appTheme,
-                view = AdViewContainer(context = context, adContent = this),
+                view = AdViewContainer(context = context, adContent = this, maxWidth = maxWidth),
                 url = "",
             )
         }
+    }
+
+    /**
+     * Merges `ads` and `items` by inserting elements from `ads` at random intervals
+     * within elements from `items`.
+     *
+     * The first `ads` element is inserted at a random position (0, 1, or 2),
+     * and each subsequent `ads` element is spaced by 1 to 3 random `items` elements.
+     * Remaining `items` elements are added at the end.
+     *
+     * @param ads The list with elements to insert.
+     * @param contents The list providing spacing elements.
+     * @return A merged list with `ads` elements interleaved within `items`.
+     */
+    private fun mergeLists(ads: List<BaseResult>, contents: List<BaseResult>): List<BaseResult> {
+        val result = mutableListOf<BaseResult>()
+        val itemsIterator = contents.iterator()
+        var position = Random.nextInt(0, 3)
+
+        for (item in ads) {
+            while (position > 0 && itemsIterator.hasNext()) {
+                result.add(itemsIterator.next())
+                position--
+            }
+
+            result.add(item)
+            position = Random.nextInt(1, 4)
+        }
+
+        while (itemsIterator.hasNext()) {
+            result.add(itemsIterator.next())
+        }
+
+        return result.toList()
     }
 
     fun toResults(
         context: Context,
         theme: AppTheme,
         contentType: MediaShareApp.ContentType,
-        sourceQuery: String?
+        sourceQuery: String?,
+        maxWidth: Int,
     ): List<BaseResult> {
         val ads = advertisements.map {
-            it.toBaseResult(context, theme)
+            it.toBaseResult(context, theme, maxWidth)
         }
         val contents = contents.mapNotNull { it.toBaseResult(theme, contentType, sourceQuery) }
-        return ads + contents
+        return mergeLists(ads, contents)
     }
 
     companion object {
@@ -200,7 +236,6 @@ private fun MediaShareResponse.Content.FileFormats.mediaItemForSharingContent(co
     return when (contentType) {
         MediaShareApp.ContentType.CLIPS -> mp4 ?: webp ?: gif
         MediaShareApp.ContentType.GIFS -> gif ?: webp ?: mp4
-        /** Pending to receive .mp4 for Stickers to be able to animate them */
-        MediaShareApp.ContentType.STICKERS -> mp4
+        MediaShareApp.ContentType.STICKERS -> webp ?: gif ?: mp4
     }
 }

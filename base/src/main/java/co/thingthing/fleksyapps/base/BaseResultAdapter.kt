@@ -24,7 +24,7 @@ class BaseResultAdapter : BaseAdapter<BaseResult>() {
 
             VIDEO_WITH_SOUND -> VideoWithSoundViewHolder(
                 binding = LayoutVideoWithSoundItemBinding.inflate(layoutInflater, parent, false),
-                onMuteClicked = { item -> onMuteClicked(item = item) }
+                onMuteClicked = { item -> muteAllVideosExceptItem(item = item) }
             )
 
             VIDEO -> VideoViewHolder(
@@ -42,7 +42,7 @@ class BaseResultAdapter : BaseAdapter<BaseResult>() {
      *
      * @param item the {@link BaseResult.VideoWithSound} item for which the mute action was triggered.
      */
-    private fun onMuteClicked(item: BaseResult.VideoWithSound) {
+    private fun muteAllVideosExceptItem(item: BaseResult.VideoWithSound) {
         items
             .filterIsInstance<BaseResult.VideoWithSound>()
             .find { it.id != item.id && it.isNotMuted() }

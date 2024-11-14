@@ -24,7 +24,7 @@ class VideoWithSoundViewHolder(
     override fun bind(viewModel: BaseResult) {
         super.bind(viewModel)
         (viewModel as BaseResult.VideoWithSound).let { vm ->
-            createExoPlayer()
+            createExoPlayerIfNeeded()
             renderVideo(item = vm)
             renderAudioButton(item = vm)
             renderLabel(label = vm.label)
@@ -32,7 +32,9 @@ class VideoWithSoundViewHolder(
         }
     }
 
-    private fun createExoPlayer() { exoPlayer = ExoPlayer.Builder(binding.root.context).build() }
+    private fun createExoPlayerIfNeeded() {
+        if (exoPlayer == null) exoPlayer = ExoPlayer.Builder(binding.root.context).build()
+    }
 
     private fun getAudioIcon(isMuted: Boolean) = if (isMuted) R.drawable.ic_mute else R.drawable.ic_unmute
 

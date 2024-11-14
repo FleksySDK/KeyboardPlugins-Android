@@ -45,14 +45,37 @@ class BaseResultAdapter : BaseAdapter<BaseResult>() {
     private fun muteAllVideosExceptItem(item: BaseResult.VideoWithSound) {
         items
             .filterIsInstance<BaseResult.VideoWithSound>()
-            .find { it.id != item.id && it.isNotMuted() }
-            ?.apply {
+            .find { it.id != item.id}
+            ?.apply { muteItemIfNotMuted(item) }
+    }
+
+    /**
+     * Mutes specific item if it is not muted before
+     *
+     * @param item that should be muted
+     */
+    private fun muteItemIfNotMuted(item: BaseResult.VideoWithSound) {
+        item.apply {
+            if (isNotMuted()) {
                 mute()
                 val index = items.indexOf(this)
                 if (index != NOT_FOUND_INDEX) {
                     notifyItemChanged(index)
                 }
             }
+        }
+    }
+
+    /**
+     * Notifies that the item is no longer visible on the screen
+     *
+     * @param position of the item that is no longer visible
+     */
+    fun onItemOutOfScreen(position: Int) {
+        when (val item = items[position]) {
+            is BaseResult.VideoWithSound -> muteItemIfNotMuted(item)
+            else -> {} // do nothing
+        }
     }
 
     override fun getItemViewType(position: Int) =

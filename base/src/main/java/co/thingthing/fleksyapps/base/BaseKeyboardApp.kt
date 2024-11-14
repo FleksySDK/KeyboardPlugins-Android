@@ -28,6 +28,8 @@ import androidx.core.widget.doOnTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager.HORIZONTAL
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.LayoutManager
+import androidx.recyclerview.widget.SimpleItemAnimator
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import co.thingthing.fleksyapps.base.databinding.LayoutBaseFrameBinding
 import co.thingthing.fleksyapps.base.databinding.LayoutConnectionErrorBinding
@@ -36,6 +38,8 @@ import co.thingthing.fleksyapps.base.databinding.LayoutFullViewBinding
 import co.thingthing.fleksyapps.base.databinding.LayoutGeneralErrorBinding
 import co.thingthing.fleksyapps.base.utils.empty
 import co.thingthing.fleksyapps.base.utils.getInstallationUniqueId
+import co.thingthing.fleksyapps.base.utils.getVisibleItemPositions
+import co.thingthing.fleksyapps.base.utils.onScrolledListener
 import co.thingthing.fleksyapps.base.utils.pxToDp
 import co.thingthing.fleksyapps.base.utils.show
 import co.thingthing.fleksyapps.core.AppConfiguration
@@ -136,6 +140,7 @@ abstract class BaseKeyboardApp : KeyboardApp {
      * Width of the carousel views in pixels
      */
     var carouselWidthPx = 0
+    private var visibleItems = mutableSetOf<Int>()
 
     /**
      * An optional extended item from an existing list result before preview
@@ -624,6 +629,23 @@ abstract class BaseKeyboardApp : KeyboardApp {
         perform(query(query, pagination))
     }
 
+    /**
+     * The method updates the list of visible items.
+     * Detects items that have gone out of view and calls `onItemOutOfScreen()` on them.
+     *
+     * @param adapter The adapter managing the data and view binding in the RecyclerView
+     * @param layoutManager The layout manager handling the positioning of items within the RecyclerView
+     */
+    private fun detectOutOfScreenItems(adapter: BaseResultAdapter?, layoutManager: LayoutManager?) {
+        if (adapter != null && layoutManager != null && (layoutManager is LinearLayoutManager || layoutManager is StaggeredGridLayoutManager)) {
+            val newVisibleItems = layoutManager.getVisibleItemPositions()
+            val itemsOutOfScreen = visibleItems - newVisibleItems
+            itemsOutOfScreen.forEach(adapter::onItemOutOfScreen)
+            visibleItems.clear()
+            visibleItems.addAll(newVisibleItems)
+        }
+    }
+
     private fun perform(request: Single<List<BaseResult>>) {
         resultAdapter = BaseResultAdapter().apply {
             clickSubject.subscribe { onItemSelected(it) }
@@ -631,7 +653,9 @@ abstract class BaseKeyboardApp : KeyboardApp {
 
         currentItemsRecyclerView().apply {
             adapter = resultAdapter
+            (itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
             layoutManager = buildHorizontalLayoutManager()
+            onScrolledListener { detectOutOfScreenItems(resultAdapter, layoutManager) }
         }
 
         contentSubscription.dispose()

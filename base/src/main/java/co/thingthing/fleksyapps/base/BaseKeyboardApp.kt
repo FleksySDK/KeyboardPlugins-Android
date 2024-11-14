@@ -140,6 +140,10 @@ abstract class BaseKeyboardApp : KeyboardApp {
      * Width of the carousel views in pixels
      */
     var carouselWidthPx = 0
+
+    /**
+     * Set of visible items positions at current moment
+     */
     private var visibleItems = mutableSetOf<Int>()
 
     /**

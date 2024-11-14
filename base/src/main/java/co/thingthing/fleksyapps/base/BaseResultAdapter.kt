@@ -72,9 +72,11 @@ class BaseResultAdapter : BaseAdapter<BaseResult>() {
      * @param position of the item that is no longer visible
      */
     fun onItemOutOfScreen(position: Int) {
-        when (val item = items[position]) {
-            is BaseResult.VideoWithSound -> muteItemIfNotMuted(item)
-            else -> {} // do nothing
+        if (position < items.size) {
+            when (val item = items[position]) {
+                is BaseResult.VideoWithSound -> muteItemIfNotMuted(item)
+                else -> {} // do nothing
+            }
         }
     }
 

@@ -45,8 +45,8 @@ class BaseResultAdapter : BaseAdapter<BaseResult>() {
     private fun muteAllVideosExceptItem(item: BaseResult.VideoWithSound) {
         items
             .filterIsInstance<BaseResult.VideoWithSound>()
-            .find { it.id != item.id}
-            ?.apply { muteItemIfNotMuted(item) }
+            .filter { it.id != item.id }
+            .forEach { muteItemIfNotMuted(it) }
     }
 
     /**

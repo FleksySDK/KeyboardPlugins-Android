@@ -23,6 +23,7 @@ import androidx.core.graphics.BlendModeCompat
 import androidx.core.graphics.blue
 import androidx.core.graphics.green
 import androidx.core.graphics.red
+import androidx.core.view.isVisible
 import androidx.core.widget.ImageViewCompat
 import androidx.core.widget.doOnTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -39,9 +40,9 @@ import co.thingthing.fleksyapps.base.databinding.LayoutGeneralErrorBinding
 import co.thingthing.fleksyapps.base.utils.empty
 import co.thingthing.fleksyapps.base.utils.getInstallationUniqueId
 import co.thingthing.fleksyapps.base.utils.getVisibleItemPositions
+import co.thingthing.fleksyapps.base.utils.hide
 import co.thingthing.fleksyapps.base.utils.onScrolledListener
 import co.thingthing.fleksyapps.base.utils.pxToDp
-import co.thingthing.fleksyapps.base.utils.show
 import co.thingthing.fleksyapps.core.AppConfiguration
 import co.thingthing.fleksyapps.core.AppInputState
 import co.thingthing.fleksyapps.core.AppListener
@@ -576,6 +577,7 @@ abstract class BaseKeyboardApp : KeyboardApp {
 
     private fun onCategoriesError(err: Throwable?) {
         Log.e("Fleksy", "Error processing categories", err)
+        currentCategoriesRecyclerView().hide()
         updateLoader(categoriesLoading = false)
     }
 
@@ -592,10 +594,8 @@ abstract class BaseKeyboardApp : KeyboardApp {
                 }
             }
         }
-        val categoriesRecyclerView =
-            if (isFullView()) fullViewBinding.fullViewAppCategories
-            else frameViewBinding.appCategories
-        categoriesRecyclerView.show()
+        val categoriesRecyclerView = currentCategoriesRecyclerView()
+        categoriesRecyclerView.isVisible = items.isNotEmpty()
         categoriesRecyclerView.also {
             it.adapter = categoryAdapter
             it.layoutManager = LinearLayoutManager(frameView?.context, HORIZONTAL, false)
@@ -670,6 +670,10 @@ abstract class BaseKeyboardApp : KeyboardApp {
     private fun currentItemsRecyclerView() =
         if (isFullView()) fullViewBinding.fullViewAppItems
         else frameViewBinding.appItems
+
+    private fun currentCategoriesRecyclerView() =
+        if (isFullView()) fullViewBinding.fullViewAppCategories
+        else frameViewBinding.appCategories
 
     open fun onItemSelected(result: BaseResult) {
         resultToAppMedia(result = result)?.also { media ->

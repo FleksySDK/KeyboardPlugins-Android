@@ -1,12 +1,14 @@
 package co.thingthing.fleksyapps.mediashare.network
 
-import android.os.SystemClock
+import android.annotation.SuppressLint
+import android.util.Log
 import co.thingthing.fleksyapps.mediashare.models.MediaShareResponse
 import co.thingthing.fleksyapps.mediashare.models.PopularTagsResponse
-import co.thingthing.fleksyapps.mediashare.models.SimpleResultResponse
 import co.thingthing.fleksyapps.mediashare.network.models.MediaShareRequestDTO
 import co.thingthing.fleksyapps.mediashare.network.models.MediaShareRequestDTO.Companion.ALL_SIZES_ADS_HEIGHT
 import io.reactivex.Single
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 import java.util.concurrent.TimeUnit.MINUTES
 
 internal class MediaShareService(
@@ -90,10 +92,11 @@ internal class MediaShareService(
         return service.getPopularTags(getHeadersMap(), requestDTO)
     }
 
+    @SuppressLint("CheckResult")
     fun sendImpression(
         contentId: String,
         type: ImpressionType,
-    ): Single<SimpleResultResponse> {
+    ) {
         val feature = when (type) {
             ImpressionType.VIEW -> MediaShareRequestDTO.Feature.ViewTrigger(contentId = contentId)
             ImpressionType.SHARE -> MediaShareRequestDTO.Feature.ShareTrigger(contentId = contentId)
@@ -106,11 +109,15 @@ internal class MediaShareService(
             userId = userId,
         )
 
-        return service.sendImpression(getHeadersMap(), requestDTO)
+        service.sendImpression(getHeadersMap(), requestDTO)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({ /* ignore result */ },  { Log.e("Fleksy", "Error sending impression", it) })
     }
 
+    @SuppressLint("CheckResult")
     private fun performHealthCheckRequestIfNeeded() {
-        val currentTime = SystemClock.elapsedRealtime()
+        val currentTime = System.currentTimeMillis()
 
         if (currentTime - lastRequestTime >= HEALTH_CHECK_MIN_WAIT_TIME) {
             lastRequestTime = currentTime
@@ -122,6 +129,9 @@ internal class MediaShareService(
                 adMaxHeight = ALL_SIZES_ADS_HEIGHT
             )
             service.getHealthCheck(getHeadersMap(), requestDTO)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({ /* ignore result */ },  { Log.e("Fleksy", "Error performing healthCheck", it) })
         } else {
             // Too soon to make a new health check request
         }

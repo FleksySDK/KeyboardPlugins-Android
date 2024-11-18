@@ -29,9 +29,12 @@
 	<dimen name="autocomplete_text_size">17sp</dimen>
 	<dimen name="card_text_margin">10dp</dimen>
 	<dimen name="error_message_text_size">16sp</dimen>
+	<dimen name="error_message_text_size_frame">16sp</dimen>
 	<dimen name="buttons_text_size">13sp</dimen>
+	<dimen name="buttons_text_size_frame">10sp</dimen>
 	<dimen name="buttons_min_width">100dp</dimen>
 	<dimen name="buttons_vertical_padding">13dp</dimen>
+	<dimen name="buttons_vertical_padding_frame">6dp</dimen>
 	<dimen name="permission_buttons_margin">8dp</dimen>
     <dimen name="app_input_margin_start">16dp</dimen>
 	<dimen name="app_icon_margin">8dp</dimen>

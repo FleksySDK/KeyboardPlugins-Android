@@ -5,9 +5,14 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.provider.Settings
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.LayoutManager
+import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import co.thingthing.fleksyapps.base.BaseCategory
 import co.thingthing.fleksyapps.base.BaseKeyboardApp
 import co.thingthing.fleksyapps.base.BaseResult
+import co.thingthing.fleksyapps.base.BaseResultAdapter
 import co.thingthing.fleksyapps.base.CustomCategory
 import co.thingthing.fleksyapps.base.Pagination
 import co.thingthing.fleksyapps.base.Typefaces
@@ -17,6 +22,7 @@ import co.thingthing.fleksyapps.mediashare.models.toCategories
 import co.thingthing.fleksyapps.mediashare.network.MediaShareService
 import co.thingthing.fleksyapps.mediashare.network.getUserAgent
 import co.thingthing.fleksyapps.mediashare.network.toNetworkContentType
+import co.thingthing.fleksyapps.mediashare.utils.getVisibleItemPositions
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
@@ -52,6 +58,11 @@ class MediaShareApp(
          */
         STICKERS
     }
+
+    /**
+     * Set of visible items positions at current moment
+     */
+    private var visibleItems = mutableSetOf<Int>()
 
     override val appId: String
         get() {
@@ -203,6 +214,28 @@ class MediaShareApp(
             userAgent = context.getUserAgent(),
             userId = androidId,
         )
+    }
+
+    /**
+     * The method updates the list of visible items.
+     * Detects items that have gone out of view and calls `onItemOutOfScreen()` on them.
+     *
+     * @param adapter The adapter managing the data and view binding in the RecyclerView
+     * @param layoutManager The layout manager handling the positioning of items within the RecyclerView
+     */
+    private fun detectOutOfScreenItems(adapter: BaseResultAdapter?, layoutManager: LayoutManager?) {
+        if (adapter != null && layoutManager != null && (layoutManager is LinearLayoutManager || layoutManager is StaggeredGridLayoutManager)) {
+            val newVisibleItems = layoutManager.getVisibleItemPositions()
+            val itemsOutOfScreen = visibleItems - newVisibleItems
+            itemsOutOfScreen.forEach(adapter::onItemOutOfScreen)
+            visibleItems.clear()
+            visibleItems.addAll(newVisibleItems)
+        }
+    }
+
+    override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+        super.onScrolled(recyclerView, dx, dy)
+        detectOutOfScreenItems(resultAdapter, currentItemsRecyclerView().layoutManager)
     }
 
     companion object {

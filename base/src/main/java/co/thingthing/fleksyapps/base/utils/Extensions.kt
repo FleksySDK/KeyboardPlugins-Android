@@ -34,42 +34,6 @@ fun Context.getInstallationUniqueId(): String {
 }
 // endregion
 
-/**
- * Method finds a range of visible item's positions and casts it to Set<Int>
- *
- * @return the Set<Int> of positions of the elements that are visible on the screen
- */
-fun LayoutManager.getVisibleItemPositions(): Set<Int> {
-    var firstVisibleItemPosition = 0
-    var lastVisibleItemPosition = 0
-    when (this) {
-        is LinearLayoutManager -> {
-            firstVisibleItemPosition = findFirstVisibleItemPosition()
-            lastVisibleItemPosition = findLastVisibleItemPosition()
-        }
-        is StaggeredGridLayoutManager -> {
-            firstVisibleItemPosition = findFirstVisibleItemPositions(null).minOrNull() ?: 0
-            lastVisibleItemPosition = findLastVisibleItemPositions(null).maxOrNull() ?: 0
-        }
-    }
-    return (firstVisibleItemPosition..lastVisibleItemPosition).toSet()
-}
-
-/**
- * Attaches a scroll listener to the RecyclerView that triggers a specified action
- * whenever the RecyclerView is scrolled.
- *
- * @param action The action to perform on each scroll event.
- */
-fun RecyclerView.onScrolledListener(action: () -> Unit) {
-    addOnScrollListener(object : RecyclerView.OnScrollListener() {
-        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-            super.onScrolled(recyclerView, dx, dy)
-            action()
-        }
-    })
-}
-
 fun View.hide() {
     visibility = View.GONE
 }

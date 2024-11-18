@@ -5,9 +5,9 @@ internal data class MediaShareRequestDTO(
     val feature: Feature,
     val userId: String,
     val platform: String = "android",
-    val adMinWidth: Int = 100,
+    val adMinWidth: Int = 50,
     val adMaxWidth: Int = 320,
-    val adMinHeight: Int = 100,
+    val adMinHeight: Int = 50,
     val adMaxHeight: Int = ALL_SIZES_ADS_HEIGHT,
     val userAgent: String = ""
 ) {

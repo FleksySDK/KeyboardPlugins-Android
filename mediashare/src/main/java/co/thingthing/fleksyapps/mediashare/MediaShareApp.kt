@@ -16,12 +16,14 @@ import co.thingthing.fleksyapps.base.BaseResultAdapter
 import co.thingthing.fleksyapps.base.CustomCategory
 import co.thingthing.fleksyapps.base.Pagination
 import co.thingthing.fleksyapps.base.Typefaces
+import co.thingthing.fleksyapps.base.viewholders.VideoWithSoundViewHolder
 import co.thingthing.fleksyapps.core.KeyboardAppViewMode
 import co.thingthing.fleksyapps.mediashare.models.MediaShareResponse
 import co.thingthing.fleksyapps.mediashare.models.toCategories
 import co.thingthing.fleksyapps.mediashare.network.MediaShareService
 import co.thingthing.fleksyapps.mediashare.network.getUserAgent
 import co.thingthing.fleksyapps.mediashare.network.toNetworkContentType
+import co.thingthing.fleksyapps.mediashare.utils.forEachViewHolder
 import co.thingthing.fleksyapps.mediashare.utils.getVisibleItemPositions
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -236,6 +238,20 @@ class MediaShareApp(
     override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
         super.onScrolled(recyclerView, dx, dy)
         detectOutOfScreenItems(resultAdapter, currentItemsRecyclerView().layoutManager)
+    }
+
+    override fun clear() {
+        super.clear()
+        releaseAllVideoPlayers()
+    }
+
+    /**
+     * The function releases video player resources from all videos
+     */
+    private fun releaseAllVideoPlayers() {
+        currentItemsRecyclerView().forEachViewHolder {
+            if (this is VideoWithSoundViewHolder) { releasePlayer() }
+        }
     }
 
     companion object {

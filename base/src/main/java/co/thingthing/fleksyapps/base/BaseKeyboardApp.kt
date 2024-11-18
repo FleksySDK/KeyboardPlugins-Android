@@ -981,7 +981,7 @@ abstract class BaseKeyboardApp : KeyboardApp, RecyclerView.OnScrollListener() {
 
     }
 
-    private fun clear() {
+    open fun clear() {
         contentSubscription.dispose()
         categoriesSubscription.dispose()
         autocompleteSubscription.dispose()

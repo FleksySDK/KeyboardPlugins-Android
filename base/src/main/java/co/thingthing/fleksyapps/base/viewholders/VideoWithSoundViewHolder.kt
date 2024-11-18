@@ -121,6 +121,10 @@ class VideoWithSoundViewHolder(
     }
 
     override fun onRecycled() {
+        releasePlayer()
+    }
+
+    fun releasePlayer() {
         exoPlayer?.release()
         exoPlayer = null
     }

@@ -48,3 +48,16 @@ fun View.show() {
  * @return The equivalent value in dp as an integer.
  */
 fun Int.pxToDp(): Int = (this / Resources.getSystem().displayMetrics.density).toInt()
+
+/**
+ * Iterates through all visible ViewHolders in the RecyclerView and performs the specified action on each.
+ *
+ * @param action A lambda function to be invoked for each ViewHolder. The ViewHolder is passed as the receiver.
+ */
+fun RecyclerView.forEachViewHolder(action: RecyclerView.ViewHolder.() -> Unit) {
+    for(i in 0 until childCount) {
+        val view = getChildAt(i)
+        val holder = getChildViewHolder(view)
+        action(holder)
+    }
+}

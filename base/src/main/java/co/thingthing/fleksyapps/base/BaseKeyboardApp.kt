@@ -37,9 +37,11 @@ import co.thingthing.fleksyapps.base.databinding.LayoutEmptyErrorBinding
 import co.thingthing.fleksyapps.base.databinding.LayoutFullViewBinding
 import co.thingthing.fleksyapps.base.databinding.LayoutGeneralErrorBinding
 import co.thingthing.fleksyapps.base.utils.empty
+import co.thingthing.fleksyapps.base.utils.forEachViewHolder
 import co.thingthing.fleksyapps.base.utils.getInstallationUniqueId
-import co.thingthing.fleksyapps.base.utils.pxToDp
 import co.thingthing.fleksyapps.base.utils.hide
+import co.thingthing.fleksyapps.base.utils.pxToDp
+import co.thingthing.fleksyapps.base.viewholders.VideoWithSoundViewHolder
 import co.thingthing.fleksyapps.core.AppConfiguration
 import co.thingthing.fleksyapps.core.AppInputState
 import co.thingthing.fleksyapps.core.AppListener
@@ -272,6 +274,7 @@ abstract class BaseKeyboardApp : KeyboardApp, RecyclerView.OnScrollListener() {
 
                     fullViewAppInputContainer.apply {
                         setOnClickListener {
+                            clear()
                             listener?.show(mode = KeyboardAppViewMode.FrameView(topBarMode))
                         }
                     }
@@ -642,6 +645,15 @@ abstract class BaseKeyboardApp : KeyboardApp, RecyclerView.OnScrollListener() {
         performAppend(request)
     }
 
+    /**
+     * The function releases video player resources from all videos
+     */
+    private fun releaseAllVideoPlayers() {
+        currentItemsRecyclerView().forEachViewHolder {
+            if (this is VideoWithSoundViewHolder) { releasePlayer() }
+        }
+    }
+
     protected fun currentItemsRecyclerView() =
         if (isFullView()) fullViewBinding.fullViewAppItems
         else frameViewBinding.appItems
@@ -988,5 +1000,6 @@ abstract class BaseKeyboardApp : KeyboardApp, RecyclerView.OnScrollListener() {
         frameView = null
         nextLoader = null
         appConfiguration = null
+        releaseAllVideoPlayers()
     }
 }

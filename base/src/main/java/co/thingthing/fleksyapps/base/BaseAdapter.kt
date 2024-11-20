@@ -6,7 +6,7 @@ import io.reactivex.subjects.PublishSubject
 
 
 abstract class BaseAdapter<T : Any> : RecyclerView.Adapter<BaseViewHolder<T>>() {
-    protected val items = mutableListOf<T>()
+    val items = mutableListOf<T>()
 
     val clickSubject: PublishSubject<T> = PublishSubject.create()
 

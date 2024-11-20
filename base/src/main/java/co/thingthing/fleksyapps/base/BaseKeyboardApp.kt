@@ -29,7 +29,6 @@ import androidx.core.widget.doOnTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager.HORIZONTAL
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.SimpleItemAnimator
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import co.thingthing.fleksyapps.base.databinding.LayoutBaseFrameBinding
 import co.thingthing.fleksyapps.base.databinding.LayoutConnectionErrorBinding
@@ -626,13 +625,21 @@ abstract class BaseKeyboardApp : KeyboardApp, RecyclerView.OnScrollListener() {
     }
 
     private fun perform(request: Single<List<BaseResult>>) {
-        resultAdapter = BaseResultAdapter().apply {
+        val recyclerView = currentItemsRecyclerView()
+        resultAdapter?.releasePlayer()
+        resultAdapter = BaseResultAdapter(
+            onVideoUnMuted = { position ->
+                recyclerView.post {
+                    recyclerView.smoothScrollToPosition(position)
+                }
+            }
+        ).apply {
             clickSubject.subscribe { onItemSelected(it) }
         }
 
-        currentItemsRecyclerView().apply {
+        recyclerView.apply {
             adapter = resultAdapter
-            (itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
+            itemAnimator = null
             layoutManager = buildHorizontalLayoutManager()
             addOnScrollListener(this@BaseKeyboardApp)
         }
@@ -735,6 +742,20 @@ abstract class BaseKeyboardApp : KeyboardApp, RecyclerView.OnScrollListener() {
         }
 
         is BaseResult.Video -> {
+            result.video.firstOrNull()?.let {
+                AppMedia(
+                    media = AppMediaSource.RemoteUrl(
+                        url = it.url,
+                        contentType = it.contentType
+                    ),
+                    label = result.label,
+                    url = result.link,
+                    sourceQuery = result.sourceQuery
+                )
+            }
+        }
+
+        is BaseResult.VideoWithSound -> {
             result.video.firstOrNull()?.let {
                 AppMedia(
                     media = AppMediaSource.RemoteUrl(

@@ -8,6 +8,7 @@ import co.thingthing.fleksyapps.base.BaseResult
 import co.thingthing.fleksyapps.base.BaseViewHolder
 import co.thingthing.fleksyapps.base.R
 import co.thingthing.fleksyapps.base.databinding.LayoutVideoWithSoundItemBinding
+import co.thingthing.fleksyapps.base.utils.FrescoImageLoader
 import co.thingthing.fleksyapps.base.utils.hide
 import co.thingthing.fleksyapps.base.utils.preferredImage
 
@@ -16,6 +17,8 @@ class VideoWithSoundViewHolder(
     private val onMuteClicked: (BaseResult.VideoWithSound) -> Unit,
     private val onPlayedVideo: (video: BaseMedia, playerView: PlayerView) -> Unit,
 ) : BaseViewHolder<BaseResult>(binding.root) {
+
+    private val frescoImageLoader: FrescoImageLoader by lazy { FrescoImageLoader() }
 
     override fun bind(viewModel: BaseResult) {
         super.bind(viewModel)
@@ -52,6 +55,17 @@ class VideoWithSoundViewHolder(
                 prepareVideoPreview(video = video)
                 onPlayedVideo(video, binding.playerView)
             }
+        }
+        item.thumbnail?.preferredImage(DEFAULT_CONTENT_TYPES)?.also { image ->
+            frescoImageLoader.load(
+                binding.image,
+                item.theme.background,
+                item.theme.foreground,
+                image.width.toFloat(),
+                image.height.toFloat(),
+                image.url,
+                image.url
+            )
         }
     }
 

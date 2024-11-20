@@ -2,6 +2,7 @@ package co.thingthing.fleksyapps.base.viewholders
 
 import android.net.Uri
 import android.view.ViewGroup
+import androidx.core.view.isInvisible
 import androidx.core.view.updateLayoutParams
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -14,18 +15,20 @@ import co.thingthing.fleksyapps.base.databinding.LayoutVideoWithSoundItemBinding
 import co.thingthing.fleksyapps.base.utils.FrescoImageLoader
 import co.thingthing.fleksyapps.base.utils.hide
 import co.thingthing.fleksyapps.base.utils.preferredImage
+import co.thingthing.fleksyapps.base.utils.show
 
 class VideoWithSoundViewHolder(
     private val binding: LayoutVideoWithSoundItemBinding,
     private val onMuteClicked: (BaseResult.VideoWithSound) -> Unit,
 ) : BaseViewHolder<BaseResult>(binding.root) {
     private var exoPlayer: ExoPlayer? = null
+    private val frescoImageLoader: FrescoImageLoader by lazy { FrescoImageLoader() }
 
     override fun bind(viewModel: BaseResult) {
         super.bind(viewModel)
         (viewModel as BaseResult.VideoWithSound).let { vm ->
             createExoPlayerIfNeeded()
-            renderVideo(item = vm)
+            renderPlaceholder(item = vm)
             renderAudioButton(item = vm)
             renderLabel(label = vm.label)
             renderDurationText(duration = vm.duration)
@@ -65,11 +68,21 @@ class VideoWithSoundViewHolder(
         binding.audioButton.run {
             setOnClickListener {
                 item.isMuted = item.isMuted.not()
-                exoPlayer?.setVolume(item.isMuted)
-                setImageResource(getAudioIcon(isMuted = item.isMuted))
+                processMuteChanges(item)
                 onMuteClicked(item)
             }
-            setImageResource(getAudioIcon(isMuted = item.isMuted))
+            processMuteChanges(item)
+        }
+    }
+
+    private fun processMuteChanges(item: BaseResult.VideoWithSound) {
+        exoPlayer?.setVolume(item.isMuted)
+        binding.audioButton.setImageResource(getAudioIcon(isMuted = item.isMuted))
+        if (item.isNotMuted()) {
+            renderVideo(item)
+        } else {
+            binding.playerView.isInvisible = true
+            exoPlayer?.pause()
         }
     }
 
@@ -79,6 +92,25 @@ class VideoWithSoundViewHolder(
                 prepareVideoPreview(video = video)
                 prepareVideoPlayer(item = item, video = video)
             }
+        }
+    }
+
+    private fun renderPlaceholder(item: BaseResult.VideoWithSound) {
+        item.video.preferredImage(DEFAULT_CONTENT_TYPES)?.also { video ->
+            binding.root.post {
+                prepareVideoPreview(video = video)
+            }
+        }
+        item.thumbnail?.preferredImage(DEFAULT_CONTENT_TYPES)?.also { image ->
+            frescoImageLoader.load(
+                binding.image,
+                item.theme.background,
+                item.theme.foreground,
+                image.width.toFloat(),
+                image.height.toFloat(),
+                image.url,
+                image.url
+            )
         }
     }
 
@@ -110,6 +142,7 @@ class VideoWithSoundViewHolder(
                     .alpha(1f)
                     .setDuration(FrescoImageLoader.FADE_DURATION.toLong())
                     .start()
+                binding.playerView.show()
             }
             binding.playerView.player = this
             setMediaItem(MediaItem.fromUri(Uri.parse(video.url)))

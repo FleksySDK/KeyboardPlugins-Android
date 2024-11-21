@@ -151,7 +151,7 @@ data class MediaShareResponse(
         return when (videoItemWithExtension.second) {
             EXTENSION_MP4 -> {
                 if (contentType == MediaShareApp.ContentType.CLIPS) {
-                    BaseResult.VideoWithSound(
+                    BaseResult.Video(
                         video = listOf(
                             BaseMedia(
                                 url = shareFile.url,
@@ -171,7 +171,8 @@ data class MediaShareResponse(
                         theme = theme,
                         duration = null,
                         source = this,
-                        id = id
+                        id = id,
+                        showTitleAndSound = true
                     )
                 } else {
                     BaseResult.Video(

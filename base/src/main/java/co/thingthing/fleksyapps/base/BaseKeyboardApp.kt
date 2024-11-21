@@ -29,7 +29,6 @@ import androidx.core.widget.doOnTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager.HORIZONTAL
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.SimpleItemAnimator
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import co.thingthing.fleksyapps.base.databinding.LayoutBaseFrameBinding
 import co.thingthing.fleksyapps.base.databinding.LayoutConnectionErrorBinding
@@ -37,11 +36,9 @@ import co.thingthing.fleksyapps.base.databinding.LayoutEmptyErrorBinding
 import co.thingthing.fleksyapps.base.databinding.LayoutFullViewBinding
 import co.thingthing.fleksyapps.base.databinding.LayoutGeneralErrorBinding
 import co.thingthing.fleksyapps.base.utils.empty
-import co.thingthing.fleksyapps.base.utils.forEachViewHolder
 import co.thingthing.fleksyapps.base.utils.getInstallationUniqueId
-import co.thingthing.fleksyapps.base.utils.hide
 import co.thingthing.fleksyapps.base.utils.pxToDp
-import co.thingthing.fleksyapps.base.viewholders.VideoWithSoundViewHolder
+import co.thingthing.fleksyapps.base.utils.hide
 import co.thingthing.fleksyapps.core.AppConfiguration
 import co.thingthing.fleksyapps.core.AppInputState
 import co.thingthing.fleksyapps.core.AppListener
@@ -629,13 +626,21 @@ abstract class BaseKeyboardApp : KeyboardApp, RecyclerView.OnScrollListener() {
     }
 
     private fun perform(request: Single<List<BaseResult>>) {
-        resultAdapter = BaseResultAdapter().apply {
+        val recyclerView = currentItemsRecyclerView()
+        resultAdapter?.releasePlayer()
+        resultAdapter = BaseResultAdapter(
+            onVideoUnMuted = { position ->
+                recyclerView.post {
+                    recyclerView.smoothScrollToPosition(position)
+                }
+            }
+        ).apply {
             clickSubject.subscribe { onItemSelected(it) }
         }
 
-        currentItemsRecyclerView().apply {
+        recyclerView.apply {
             adapter = resultAdapter
-            (itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
+            itemAnimator = null
             layoutManager = buildHorizontalLayoutManager()
             addOnScrollListener(this@BaseKeyboardApp)
         }
@@ -643,15 +648,6 @@ abstract class BaseKeyboardApp : KeyboardApp, RecyclerView.OnScrollListener() {
         contentSubscription.dispose()
         updateLoader(contentLoading = true)
         performAppend(request)
-    }
-
-    /**
-     * The function releases video player resources from all videos
-     */
-    private fun releaseAllVideoPlayers() {
-        currentItemsRecyclerView().forEachViewHolder {
-            if (this is VideoWithSoundViewHolder) { releasePlayer() }
-        }
     }
 
     protected fun currentItemsRecyclerView() =
@@ -747,6 +743,20 @@ abstract class BaseKeyboardApp : KeyboardApp, RecyclerView.OnScrollListener() {
         }
 
         is BaseResult.Video -> {
+            result.video.firstOrNull()?.let {
+                AppMedia(
+                    media = AppMediaSource.RemoteUrl(
+                        url = it.url,
+                        contentType = it.contentType
+                    ),
+                    label = result.label,
+                    url = result.link,
+                    sourceQuery = result.sourceQuery
+                )
+            }
+        }
+
+        is BaseResult.VideoWithSound -> {
             result.video.firstOrNull()?.let {
                 AppMedia(
                     media = AppMediaSource.RemoteUrl(
@@ -1000,6 +1010,6 @@ abstract class BaseKeyboardApp : KeyboardApp, RecyclerView.OnScrollListener() {
         frameView = null
         nextLoader = null
         appConfiguration = null
-        releaseAllVideoPlayers()
+        resultAdapter?.releasePlayer()
     }
 }

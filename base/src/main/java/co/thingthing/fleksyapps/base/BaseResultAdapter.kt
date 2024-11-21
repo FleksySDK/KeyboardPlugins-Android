@@ -25,10 +25,10 @@ class BaseResultAdapter(
     private val onVideoUnMuted: (position: Int) -> Unit
 ) : BaseAdapter<BaseResult>() {
     private var exoPlayer: ExoPlayer? = null
+    private var unMutedPosition = 0
 
     override fun create(parent: ViewGroup, viewType: Int): BaseViewHolder<BaseResult> {
         val layoutInflater = LayoutInflater.from(parent.context)
-        createExoPlayerIfNeeded(context = parent.context)
         return when (viewType) {
             IMAGE -> ImageViewHolder(
                 binding = LayoutImageItemBinding.inflate(layoutInflater, parent, false)
@@ -37,9 +37,23 @@ class BaseResultAdapter(
             VIDEO_WITH_SOUND -> VideoWithSoundViewHolder(
                 binding = LayoutVideoWithSoundItemBinding.inflate(layoutInflater, parent, false),
                 onMuteClicked = ::muteClicked,
-                onPlayedVideo = { video, playerView ->
+                onPreviewRendered = { item, video, playerView ->
                     createExoPlayerIfNeeded(parent.context)
                     prepareVideoPlayer(video, playerView)
+                    val position = items.indexOf(item)
+                    if (position == NOT_FOUND_INDEX) {
+                        /**
+                         * Sometimes items list contains an old [BaseResult.Video] item
+                         * Instead of new [BaseResult.VideoWithSound] item
+                         * In this case we will update the list again
+                         */
+                        (items[unMutedPosition] as? BaseResult.Video)?.let {
+                            unMuteItem(it)
+                            onVideoUnMuted(unMutedPosition)
+                        }
+                    } else {
+                        onVideoUnMuted(items.indexOf(item))
+                    }
                 },
             )
 
@@ -97,8 +111,8 @@ class BaseResultAdapter(
             val index = items.indexOf(this)
             if (index != NOT_FOUND_INDEX) {
                 items[index] = toUnMutedVideo()
+                unMutedPosition = index
                 notifyItemChanged(index)
-                onVideoUnMuted(index)
             }
         }
     }

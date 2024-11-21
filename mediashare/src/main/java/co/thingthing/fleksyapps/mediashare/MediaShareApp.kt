@@ -238,18 +238,6 @@ class MediaShareApp(
         detectOutOfScreenItems(resultAdapter, currentItemsRecyclerView().layoutManager)
     }
 
-    override fun clear() {
-        super.clear()
-        releaseVideoPlayer()
-    }
-
-    /**
-     * The function releases video player resources from all videos
-     */
-    private fun releaseVideoPlayer() {
-        (currentItemsRecyclerView().adapter as BaseResultAdapter).releasePlayer()
-    }
-
     companion object {
         private const val MEDIA_SHARE_TRENDING = "Trending"
     }

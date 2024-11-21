@@ -271,6 +271,7 @@ abstract class BaseKeyboardApp : KeyboardApp, RecyclerView.OnScrollListener() {
 
                     fullViewAppInputContainer.apply {
                         setOnClickListener {
+                            clear()
                             listener?.show(mode = KeyboardAppViewMode.FrameView(topBarMode))
                         }
                     }
@@ -1009,5 +1010,6 @@ abstract class BaseKeyboardApp : KeyboardApp, RecyclerView.OnScrollListener() {
         frameView = null
         nextLoader = null
         appConfiguration = null
+        resultAdapter?.releasePlayer()
     }
 }

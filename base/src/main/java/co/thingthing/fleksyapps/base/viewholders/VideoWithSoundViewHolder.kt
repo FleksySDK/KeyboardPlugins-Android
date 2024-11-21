@@ -15,7 +15,7 @@ import co.thingthing.fleksyapps.base.utils.preferredImage
 class VideoWithSoundViewHolder(
     private val binding: LayoutVideoWithSoundItemBinding,
     private val onMuteClicked: (BaseResult.VideoWithSound) -> Unit,
-    private val onPlayedVideo: (video: BaseMedia, playerView: PlayerView) -> Unit,
+    private val onPreviewRendered: (item: BaseResult.VideoWithSound, video: BaseMedia, playerView: PlayerView) -> Unit,
 ) : BaseViewHolder<BaseResult>(binding.root) {
 
     private val frescoImageLoader: FrescoImageLoader by lazy { FrescoImageLoader() }
@@ -23,7 +23,7 @@ class VideoWithSoundViewHolder(
     override fun bind(viewModel: BaseResult) {
         super.bind(viewModel)
         (viewModel as BaseResult.VideoWithSound).let { vm ->
-            renderVideo(item = vm)
+            renderVideoPreview(item = vm)
             renderAudioButton(item = vm)
             renderLabel(label = vm.label)
             renderDurationText(duration = vm.duration)
@@ -49,11 +49,11 @@ class VideoWithSoundViewHolder(
         }
     }
 
-    private fun renderVideo(item: BaseResult.VideoWithSound) {
+    private fun renderVideoPreview(item: BaseResult.VideoWithSound) {
         item.video.preferredImage(DEFAULT_CONTENT_TYPES)?.also { video ->
             binding.root.post {
                 prepareVideoPreview(video = video)
-                onPlayedVideo(video, binding.playerView)
+                onPreviewRendered(item, video, binding.playerView)
             }
         }
         item.thumbnail?.preferredImage(DEFAULT_CONTENT_TYPES)?.also { image ->

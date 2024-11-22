@@ -1,11 +1,8 @@
 package co.thingthing.fleksyapps.base.viewholders
 
-import android.net.Uri
 import android.view.ViewGroup
 import androidx.core.view.updateLayoutParams
-import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
-import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 import co.thingthing.fleksyapps.base.BaseMedia
 import co.thingthing.fleksyapps.base.BaseResult
 import co.thingthing.fleksyapps.base.BaseViewHolder
@@ -18,32 +15,19 @@ import co.thingthing.fleksyapps.base.utils.preferredImage
 class VideoWithSoundViewHolder(
     private val binding: LayoutVideoWithSoundItemBinding,
     private val onMuteClicked: (BaseResult.VideoWithSound) -> Unit,
+    private val onPreviewRendered: (item: BaseResult.VideoWithSound, video: BaseMedia, playerView: PlayerView) -> Unit,
 ) : BaseViewHolder<BaseResult>(binding.root) {
-    private var exoPlayer: ExoPlayer? = null
+
+    private val frescoImageLoader: FrescoImageLoader by lazy { FrescoImageLoader() }
 
     override fun bind(viewModel: BaseResult) {
         super.bind(viewModel)
         (viewModel as BaseResult.VideoWithSound).let { vm ->
-            createExoPlayer()
-            renderVideo(item = vm)
+            renderVideoPreview(item = vm)
             renderAudioButton(item = vm)
             renderLabel(label = vm.label)
             renderDurationText(duration = vm.duration)
         }
-    }
-
-    private fun createExoPlayer() { exoPlayer = ExoPlayer.Builder(binding.root.context).build() }
-
-    private fun getAudioIcon(isMuted: Boolean) = if (isMuted) R.drawable.ic_mute else R.drawable.ic_unmute
-
-    private fun ExoPlayer.setVolume(isMuted: Boolean) { volume = if (isMuted) 0F else 1F }
-
-    private fun ExoPlayer.doWhenPlayerReady(action: () -> Unit) {
-        addListener(object : Player.Listener {
-            override fun onPlaybackStateChanged(state: Int) {
-                if (state == Player.STATE_READY) action()
-            }
-        })
     }
 
     private fun renderDurationText(duration: Long?) {
@@ -60,23 +44,28 @@ class VideoWithSoundViewHolder(
     }
 
     private fun renderAudioButton(item: BaseResult.VideoWithSound) {
-        binding.audioButton.run {
-            setOnClickListener {
-                item.isMuted = item.isMuted.not()
-                exoPlayer?.setVolume(item.isMuted)
-                setImageResource(getAudioIcon(isMuted = item.isMuted))
-                onMuteClicked(item)
-            }
-            setImageResource(getAudioIcon(isMuted = item.isMuted))
+        binding.audioButton.setOnClickListener {
+            onMuteClicked(item)
         }
     }
 
-    private fun renderVideo(item: BaseResult.VideoWithSound) {
+    private fun renderVideoPreview(item: BaseResult.VideoWithSound) {
         item.video.preferredImage(DEFAULT_CONTENT_TYPES)?.also { video ->
             binding.root.post {
                 prepareVideoPreview(video = video)
-                prepareVideoPlayer(item = item, video = video)
+                onPreviewRendered(item, video, binding.playerView)
             }
+        }
+        item.thumbnail?.preferredImage(DEFAULT_CONTENT_TYPES)?.also { image ->
+            frescoImageLoader.load(
+                binding.image,
+                item.theme.background,
+                item.theme.foreground,
+                image.width.toFloat(),
+                image.height.toFloat(),
+                image.url,
+                image.url
+            )
         }
     }
 
@@ -88,38 +77,10 @@ class VideoWithSoundViewHolder(
         val measuredHeight = cardHeight.toInt()
 
         binding.run {
-            image.updateLayoutParams<ViewGroup.LayoutParams> {
-                width = measuredWidth
-                height = measuredHeight
-            }
             cardView.updateLayoutParams<ViewGroup.LayoutParams> {
                 width = measuredWidth
                 height = measuredHeight
             }
         }
-    }
-
-    private fun prepareVideoPlayer(item: BaseResult.VideoWithSound, video: BaseMedia) {
-        exoPlayer?.run {
-            doWhenPlayerReady {
-                /** doing a similar fade animation that we have in webp */
-                binding.playerView
-                    .animate()
-                    .alpha(1f)
-                    .setDuration(FrescoImageLoader.FADE_DURATION.toLong())
-                    .start()
-            }
-            binding.playerView.player = this
-            setMediaItem(MediaItem.fromUri(Uri.parse(video.url)))
-            repeatMode = Player.REPEAT_MODE_ALL
-            playWhenReady = true
-            setVolume(item.isMuted)
-            prepare()
-        }
-    }
-
-    override fun onRecycled() {
-        exoPlayer?.release()
-        exoPlayer = null
     }
 }

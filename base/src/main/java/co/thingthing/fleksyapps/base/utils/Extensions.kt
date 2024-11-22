@@ -3,6 +3,10 @@ package co.thingthing.fleksyapps.base.utils
 import android.content.Context
 import android.content.res.Resources
 import android.view.View
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.LayoutManager
+import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import co.thingthing.fleksyapps.base.BaseMedia
 import java.util.UUID
 

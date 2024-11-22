@@ -47,7 +47,6 @@
             android:layout_marginBottom="4dp"
             android:clipToPadding="false"
             android:padding="2dp"
-            android:visibility="gone"
             app:layout_constraintBottom_toTopOf="@+id/appIcon"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
@@ -150,7 +149,7 @@
 
         <include
             android:id="@+id/connectionErrorLayout"
-            layout="@layout/layout_connection_error"
+            layout="@layout/layout_connection_error_frame"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:visibility="gone"

@@ -23,6 +23,7 @@ import androidx.core.graphics.BlendModeCompat
 import androidx.core.graphics.blue
 import androidx.core.graphics.green
 import androidx.core.graphics.red
+import androidx.core.view.isVisible
 import androidx.core.widget.ImageViewCompat
 import androidx.core.widget.doOnTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -37,7 +38,7 @@ import co.thingthing.fleksyapps.base.databinding.LayoutGeneralErrorBinding
 import co.thingthing.fleksyapps.base.utils.empty
 import co.thingthing.fleksyapps.base.utils.getInstallationUniqueId
 import co.thingthing.fleksyapps.base.utils.pxToDp
-import co.thingthing.fleksyapps.base.utils.show
+import co.thingthing.fleksyapps.base.utils.hide
 import co.thingthing.fleksyapps.core.AppConfiguration
 import co.thingthing.fleksyapps.core.AppInputState
 import co.thingthing.fleksyapps.core.AppListener
@@ -55,7 +56,7 @@ import io.reactivex.schedulers.Schedulers
 import java.io.IOException
 
 @SuppressLint("CheckResult")
-abstract class BaseKeyboardApp : KeyboardApp {
+abstract class BaseKeyboardApp : KeyboardApp, RecyclerView.OnScrollListener() {
     var listener: AppListener? = null
     private var frameView: BaseAppView? = null
     private var fullView: View? = null
@@ -270,6 +271,7 @@ abstract class BaseKeyboardApp : KeyboardApp {
 
                     fullViewAppInputContainer.apply {
                         setOnClickListener {
+                            clear()
                             listener?.show(mode = KeyboardAppViewMode.FrameView(topBarMode))
                         }
                     }
@@ -552,7 +554,7 @@ abstract class BaseKeyboardApp : KeyboardApp {
         loadCategories()
     }
 
-    private var resultAdapter: BaseResultAdapter? = null
+    protected var resultAdapter: BaseResultAdapter? = null
     private var categoryAdapter: BaseCategoryAdapter? = null
 
     private fun loadCategories() {
@@ -567,6 +569,7 @@ abstract class BaseKeyboardApp : KeyboardApp {
 
     private fun onCategoriesError(err: Throwable?) {
         Log.e("Fleksy", "Error processing categories", err)
+        currentCategoriesRecyclerView().hide()
         updateLoader(categoriesLoading = false)
     }
 
@@ -583,10 +586,8 @@ abstract class BaseKeyboardApp : KeyboardApp {
                 }
             }
         }
-        val categoriesRecyclerView =
-            if (isFullView()) fullViewBinding.fullViewAppCategories
-            else frameViewBinding.appCategories
-        categoriesRecyclerView.show()
+        val categoriesRecyclerView = currentCategoriesRecyclerView()
+        categoriesRecyclerView.isVisible = items.isNotEmpty()
         categoriesRecyclerView.also {
             it.adapter = categoryAdapter
             it.layoutManager = LinearLayoutManager(frameView?.context, HORIZONTAL, false)
@@ -625,13 +626,23 @@ abstract class BaseKeyboardApp : KeyboardApp {
     }
 
     private fun perform(request: Single<List<BaseResult>>) {
-        resultAdapter = BaseResultAdapter().apply {
+        val recyclerView = currentItemsRecyclerView()
+        resultAdapter?.releasePlayer()
+        resultAdapter = BaseResultAdapter(
+            onVideoUnMuted = { position ->
+                recyclerView.post {
+                    recyclerView.smoothScrollToPosition(position)
+                }
+            }
+        ).apply {
             clickSubject.subscribe { onItemSelected(it) }
         }
 
-        currentItemsRecyclerView().apply {
+        recyclerView.apply {
             adapter = resultAdapter
+            itemAnimator = null
             layoutManager = buildHorizontalLayoutManager()
+            addOnScrollListener(this@BaseKeyboardApp)
         }
 
         contentSubscription.dispose()
@@ -639,9 +650,13 @@ abstract class BaseKeyboardApp : KeyboardApp {
         performAppend(request)
     }
 
-    private fun currentItemsRecyclerView() =
+    protected fun currentItemsRecyclerView() =
         if (isFullView()) fullViewBinding.fullViewAppItems
         else frameViewBinding.appItems
+
+    private fun currentCategoriesRecyclerView() =
+        if (isFullView()) fullViewBinding.fullViewAppCategories
+        else frameViewBinding.appCategories
 
     open fun onItemSelected(result: BaseResult) {
         resultToAppMedia(result = result)?.also { media ->
@@ -728,6 +743,20 @@ abstract class BaseKeyboardApp : KeyboardApp {
         }
 
         is BaseResult.Video -> {
+            result.video.firstOrNull()?.let {
+                AppMedia(
+                    media = AppMediaSource.RemoteUrl(
+                        url = it.url,
+                        contentType = it.contentType
+                    ),
+                    label = result.label,
+                    url = result.link,
+                    sourceQuery = result.sourceQuery
+                )
+            }
+        }
+
+        is BaseResult.VideoWithSound -> {
             result.video.firstOrNull()?.let {
                 AppMedia(
                     media = AppMediaSource.RemoteUrl(
@@ -974,12 +1003,13 @@ abstract class BaseKeyboardApp : KeyboardApp {
 
     }
 
-    private fun clear() {
+    open fun clear() {
         contentSubscription.dispose()
         categoriesSubscription.dispose()
         autocompleteSubscription.dispose()
         frameView = null
         nextLoader = null
         appConfiguration = null
+        resultAdapter?.releasePlayer()
     }
 }

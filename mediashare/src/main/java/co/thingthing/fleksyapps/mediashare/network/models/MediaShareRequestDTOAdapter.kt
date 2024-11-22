@@ -18,6 +18,11 @@ internal class MediaShareRequestDTOAdapter : JsonSerializer<MediaShareRequestDTO
             addProperty("userId", src.userId)
             addProperty("platform", src.platform)
             addProperty("userAgent", src.userAgent)
+            addProperty("deviceOperatingSystemVersion", src.deviceOperatingSystemVersion)
+            addProperty("deviceHardwareVersion", src.deviceHardwareVersion)
+            addProperty("deviceMake", src.deviceMake)
+            addProperty("deviceModel", src.deviceModel)
+            src.deviceIfa?.let { addProperty("deviceIfa", it) }
 
             val requiresAdsParameters: Boolean
 

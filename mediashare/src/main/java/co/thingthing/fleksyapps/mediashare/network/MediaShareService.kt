@@ -6,6 +6,7 @@ import co.thingthing.fleksyapps.mediashare.models.MediaShareResponse
 import co.thingthing.fleksyapps.mediashare.models.PopularTagsResponse
 import co.thingthing.fleksyapps.mediashare.network.models.MediaShareRequestDTO
 import co.thingthing.fleksyapps.mediashare.network.models.MediaShareRequestDTO.Companion.ALL_SIZES_ADS_HEIGHT
+import co.thingthing.fleksyapps.mediashare.utils.DeviceInfoProvider
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
@@ -13,6 +14,7 @@ import java.util.concurrent.TimeUnit.MINUTES
 
 internal class MediaShareService(
     private val contentType: MediaShareRequestDTO.ContentType,
+    private val deviceInfoProvider: DeviceInfoProvider,
     private val mediaShareApiKey: String,
     private val sdkLicenseId: String,
     private val userAgent: String,
@@ -70,6 +72,11 @@ internal class MediaShareService(
             userId = userId,
             userAgent = userAgent,
             adMaxHeight = adMaxHeight,
+            deviceOperatingSystemVersion = deviceInfoProvider.operatingSystemVersion,
+            deviceHardwareVersion = deviceInfoProvider.hardwareVersion,
+            deviceMake = deviceInfoProvider.deviceMake,
+            deviceModel = deviceInfoProvider.deviceModel,
+            deviceIfa = deviceInfoProvider.deviceIfa,
         )
 
         return service.getContent(getHeadersMap(), requestDTO)
@@ -87,6 +94,11 @@ internal class MediaShareService(
             userId = userId,
             userAgent = userAgent,
             adMaxHeight = adMaxHeight,
+            deviceOperatingSystemVersion = deviceInfoProvider.operatingSystemVersion,
+            deviceHardwareVersion = deviceInfoProvider.hardwareVersion,
+            deviceMake = deviceInfoProvider.deviceMake,
+            deviceModel = deviceInfoProvider.deviceModel,
+            deviceIfa = deviceInfoProvider.deviceIfa,
         )
 
         return service.getPopularTags(getHeadersMap(), requestDTO)
@@ -107,6 +119,11 @@ internal class MediaShareService(
             feature = feature,
             userAgent = userAgent,
             userId = userId,
+            deviceOperatingSystemVersion = deviceInfoProvider.operatingSystemVersion,
+            deviceHardwareVersion = deviceInfoProvider.hardwareVersion,
+            deviceMake = deviceInfoProvider.deviceMake,
+            deviceModel = deviceInfoProvider.deviceModel,
+            deviceIfa = deviceInfoProvider.deviceIfa,
         )
 
         service.sendImpression(getHeadersMap(), requestDTO)
@@ -126,7 +143,12 @@ internal class MediaShareService(
                 feature = MediaShareRequestDTO.Feature.HealthCheck,
                 userAgent = userAgent,
                 userId = userId,
-                adMaxHeight = ALL_SIZES_ADS_HEIGHT
+                adMaxHeight = ALL_SIZES_ADS_HEIGHT,
+                deviceOperatingSystemVersion = deviceInfoProvider.operatingSystemVersion,
+                deviceHardwareVersion = deviceInfoProvider.hardwareVersion,
+                deviceMake = deviceInfoProvider.deviceMake,
+                deviceModel = deviceInfoProvider.deviceModel,
+                deviceIfa = deviceInfoProvider.deviceIfa,
             )
             service.getHealthCheck(getHeadersMap(), requestDTO)
                 .subscribeOn(Schedulers.io())

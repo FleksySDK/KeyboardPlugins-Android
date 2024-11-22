@@ -1,5 +1,7 @@
 package co.thingthing.fleksyapps.mediashare.network.models
 
+import android.os.Build
+
 internal data class MediaShareRequestDTO(
     val content: ContentType,
     val feature: Feature,
@@ -9,7 +11,12 @@ internal data class MediaShareRequestDTO(
     val adMaxWidth: Int = 320,
     val adMinHeight: Int = 50,
     val adMaxHeight: Int = ALL_SIZES_ADS_HEIGHT,
-    val userAgent: String = ""
+    val userAgent: String = "",
+    val deviceOperatingSystemVersion: String = Build.VERSION.RELEASE,
+    val deviceHardwareVersion: String = Build.HARDWARE,
+    val deviceMake: String = Build.MANUFACTURER,
+    val deviceModel: String = Build.MODEL,
+    val deviceIfa: String? = null,
 ) {
 
     companion object {

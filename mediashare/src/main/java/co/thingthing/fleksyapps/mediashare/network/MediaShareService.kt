@@ -52,6 +52,33 @@ internal class MediaShareService(
         SHARE
     }
 
+    private fun createMediaShareRequest(
+        feature: MediaShareRequestDTO.Feature,
+        adMaxHeight: Int = ALL_SIZES_ADS_HEIGHT,
+    ) = Single.create { emitter ->
+            try {
+                val request = MediaShareRequestDTO(
+                    content = contentType,
+                    feature = feature,
+                    userId = userId,
+                    userAgent = userAgent,
+                    adMaxHeight = adMaxHeight,
+                    deviceOperatingSystemVersion = deviceInfoProvider.operatingSystemVersion,
+                    deviceHardwareVersion = deviceInfoProvider.hardwareVersion,
+                    deviceMake = deviceInfoProvider.deviceMake,
+                    deviceModel = deviceInfoProvider.deviceModel,
+                    deviceIfa = deviceInfoProvider.loadDeviceIfa(),
+                )
+                if (emitter.isDisposed.not()) {
+                    emitter.onSuccess(request)
+                }
+            } catch (e: Exception) {
+                if (emitter.isDisposed.not()) {
+                    emitter.onError(e)
+                }
+            }
+        }
+
     fun getContent(
         content: Content,
         adMaxHeight: Int,
@@ -66,42 +93,21 @@ internal class MediaShareService(
             )
         }
 
-        val requestDTO = MediaShareRequestDTO(
-            content = contentType,
-            feature = feature,
-            userId = userId,
-            userAgent = userAgent,
-            adMaxHeight = adMaxHeight,
-            deviceOperatingSystemVersion = deviceInfoProvider.operatingSystemVersion,
-            deviceHardwareVersion = deviceInfoProvider.hardwareVersion,
-            deviceMake = deviceInfoProvider.deviceMake,
-            deviceModel = deviceInfoProvider.deviceModel,
-            deviceIfa = deviceInfoProvider.deviceIfa,
-        )
-
-        return service.getContent(getHeadersMap(), requestDTO)
+        return createMediaShareRequest(feature = feature, adMaxHeight = adMaxHeight)
+            .flatMap { requestDTO ->
+                service.getContent(getHeadersMap(), requestDTO)
+            }
     }
 
     fun getTags(
-        userId: String,
         adMaxHeight: Int,
     ): Single<PopularTagsResponse> {
         performHealthCheckRequestIfNeeded()
 
-        val requestDTO = MediaShareRequestDTO(
-            content = contentType,
-            feature = MediaShareRequestDTO.Feature.Tags,
-            userId = userId,
-            userAgent = userAgent,
-            adMaxHeight = adMaxHeight,
-            deviceOperatingSystemVersion = deviceInfoProvider.operatingSystemVersion,
-            deviceHardwareVersion = deviceInfoProvider.hardwareVersion,
-            deviceMake = deviceInfoProvider.deviceMake,
-            deviceModel = deviceInfoProvider.deviceModel,
-            deviceIfa = deviceInfoProvider.deviceIfa,
-        )
-
-        return service.getPopularTags(getHeadersMap(), requestDTO)
+        return createMediaShareRequest(feature = MediaShareRequestDTO.Feature.Tags, adMaxHeight = adMaxHeight)
+            .flatMap { requestDTO ->
+                service.getPopularTags(getHeadersMap(), requestDTO)
+            }
     }
 
     @SuppressLint("CheckResult")
@@ -114,22 +120,13 @@ internal class MediaShareService(
             ImpressionType.SHARE -> MediaShareRequestDTO.Feature.ShareTrigger(contentId = contentId)
         }
 
-        val requestDTO = MediaShareRequestDTO(
-            content = contentType,
-            feature = feature,
-            userAgent = userAgent,
-            userId = userId,
-            deviceOperatingSystemVersion = deviceInfoProvider.operatingSystemVersion,
-            deviceHardwareVersion = deviceInfoProvider.hardwareVersion,
-            deviceMake = deviceInfoProvider.deviceMake,
-            deviceModel = deviceInfoProvider.deviceModel,
-            deviceIfa = deviceInfoProvider.deviceIfa,
-        )
-
-        service.sendImpression(getHeadersMap(), requestDTO)
+        createMediaShareRequest(feature = feature)
+            .flatMap { requestDTO ->
+                service.sendImpression(getHeadersMap(), requestDTO)
+            }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({ /* ignore result */ },  { Log.e("Fleksy", "Error sending impression", it) })
+            .subscribe({ /* ignore result */ }, { Log.e("Fleksy", "Error sending impression", it) })
     }
 
     @SuppressLint("CheckResult")
@@ -138,19 +135,11 @@ internal class MediaShareService(
 
         if (currentTime - lastRequestTime >= HEALTH_CHECK_MIN_WAIT_TIME) {
             lastRequestTime = currentTime
-            val requestDTO = MediaShareRequestDTO(
-                content = contentType,
-                feature = MediaShareRequestDTO.Feature.HealthCheck,
-                userAgent = userAgent,
-                userId = userId,
-                adMaxHeight = ALL_SIZES_ADS_HEIGHT,
-                deviceOperatingSystemVersion = deviceInfoProvider.operatingSystemVersion,
-                deviceHardwareVersion = deviceInfoProvider.hardwareVersion,
-                deviceMake = deviceInfoProvider.deviceMake,
-                deviceModel = deviceInfoProvider.deviceModel,
-                deviceIfa = deviceInfoProvider.deviceIfa,
-            )
-            service.getHealthCheck(getHeadersMap(), requestDTO)
+
+            createMediaShareRequest(feature = MediaShareRequestDTO.Feature.HealthCheck)
+                .flatMap { requestDTO ->
+                    service.getHealthCheck(getHeadersMap(), requestDTO)
+                }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({ /* ignore result */ },  { Log.e("Fleksy", "Error performing healthCheck", it) })

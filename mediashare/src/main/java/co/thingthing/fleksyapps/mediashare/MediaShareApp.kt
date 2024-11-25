@@ -184,7 +184,6 @@ class MediaShareApp(
 
     private val remoteCategories
         get() = service.getTags(
-            userId = androidId,
             adMaxHeight = carouselHeight
         ).map { category ->
             category.toCategories(appTheme = theme, typeface = customTypefaces?.bold)

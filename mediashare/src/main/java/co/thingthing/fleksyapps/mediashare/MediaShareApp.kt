@@ -22,6 +22,8 @@ import co.thingthing.fleksyapps.mediashare.models.toCategories
 import co.thingthing.fleksyapps.mediashare.network.MediaShareService
 import co.thingthing.fleksyapps.mediashare.network.getUserAgent
 import co.thingthing.fleksyapps.mediashare.network.toNetworkContentType
+import co.thingthing.fleksyapps.mediashare.utils.DeviceInfoProvider
+import co.thingthing.fleksyapps.mediashare.utils.DeviceInfoProviderImpl
 import co.thingthing.fleksyapps.mediashare.utils.getVisibleItemPositions
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -63,6 +65,7 @@ class MediaShareApp(
      * Set of visible items positions at current moment
      */
     private var visibleItems = mutableSetOf<Int>()
+    private val deviceInfoProvider: DeviceInfoProvider by lazy { DeviceInfoProviderImpl(context = context?.applicationContext) }
 
     override val appId: String
         get() {
@@ -181,7 +184,6 @@ class MediaShareApp(
 
     private val remoteCategories
         get() = service.getTags(
-            userId = androidId,
             adMaxHeight = carouselHeight
         ).map { category ->
             category.toCategories(appTheme = theme, typeface = customTypefaces?.bold)
@@ -209,6 +211,7 @@ class MediaShareApp(
     private val service by lazy {
         MediaShareService(
             contentType = contentType.toNetworkContentType(),
+            deviceInfoProvider = deviceInfoProvider,
             mediaShareApiKey = apiKey,
             sdkLicenseId = sdkLicenseKey,
             userAgent = context.getUserAgent(),

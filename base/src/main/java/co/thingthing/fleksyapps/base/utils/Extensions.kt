@@ -1,6 +1,12 @@
 package co.thingthing.fleksyapps.base.utils
 
 import android.content.Context
+import android.content.res.Resources
+import android.view.View
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.LayoutManager
+import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import co.thingthing.fleksyapps.base.BaseMedia
 import java.util.UUID
 
@@ -27,3 +33,18 @@ fun Context.getInstallationUniqueId(): String {
     return uniqueID
 }
 // endregion
+
+fun View.hide() {
+    visibility = View.GONE
+}
+
+fun View.show() {
+    visibility = View.VISIBLE
+}
+
+/**
+ * Converts a pixel value to density-independent pixels (dp).
+ *
+ * @return The equivalent value in dp as an integer.
+ */
+fun Int.pxToDp(): Int = (this / Resources.getSystem().displayMetrics.density).toInt()

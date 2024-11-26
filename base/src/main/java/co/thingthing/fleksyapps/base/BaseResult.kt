@@ -14,6 +14,7 @@ sealed class BaseResult(
     }
 
     open class Image(
+        override val id: String,
         val image: List<BaseMedia>,
         val thumbnail: List<BaseMedia>? = null,
         val placeholder: List<BaseMedia>? = null,
@@ -22,7 +23,7 @@ sealed class BaseResult(
         source: Any? = null,
         theme: AppTheme,
         sourceQuery: String? = null
-    ) : BaseResult(source, theme, sourceQuery) {
+    ) : BaseResult(source, theme, id, sourceQuery) {
 
         fun preferredImageFor(contentTypes: List<String>): BaseMedia? {
             val preferredContentType =
@@ -35,22 +36,38 @@ sealed class BaseResult(
         }
     }
 
-    open class Video(
+    open class VideoWithSound(
         override val id: String? = null,
-        val video: List<BaseMedia>,
-        val duration: Long?,
-        val thumbnail: List<BaseMedia>?,
-        val link: String?,
-        val label: String?,
+        open val video: List<BaseMedia>,
+        open val duration: Long?,
+        open val thumbnail: List<BaseMedia>?,
+        open val link: String?,
+        open val label: String?,
         source: Any?,
         theme: AppTheme
-    ) : BaseResult(source, theme, id)
+    ) : BaseResult(source, theme, id) {
+        fun toMutedVideo() = Video(id, video, duration, thumbnail, link, label, source, theme, showTitleAndSound = true)
+    }
+
+    open class Video(
+        override val id: String? = null,
+        open val video: List<BaseMedia>,
+        open val duration: Long?,
+        open val thumbnail: List<BaseMedia>?,
+        open val link: String?,
+        open val label: String?,
+        source: Any?,
+        theme: AppTheme,
+        val showTitleAndSound: Boolean = false,
+    ) : BaseResult(source, theme, id) {
+        fun toUnMutedVideo() = VideoWithSound(id, video, duration, thumbnail, link, label, source, theme)
+    }
 
     open class Card(
         source: Any? = null,
         theme: AppTheme,
         val view: View,
         val url: String
-    ) : BaseResult(source, theme)
+    ) : BaseResult(source, theme, null)
 }
 

@@ -9,6 +9,7 @@ import android.graphics.drawable.GradientDrawable
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewTreeObserver
 import android.view.accessibility.AccessibilityEvent
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
@@ -22,6 +23,7 @@ import androidx.core.graphics.BlendModeCompat
 import androidx.core.graphics.blue
 import androidx.core.graphics.green
 import androidx.core.graphics.red
+import androidx.core.view.isVisible
 import androidx.core.widget.ImageViewCompat
 import androidx.core.widget.doOnTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -35,6 +37,8 @@ import co.thingthing.fleksyapps.base.databinding.LayoutFullViewBinding
 import co.thingthing.fleksyapps.base.databinding.LayoutGeneralErrorBinding
 import co.thingthing.fleksyapps.base.utils.empty
 import co.thingthing.fleksyapps.base.utils.getInstallationUniqueId
+import co.thingthing.fleksyapps.base.utils.pxToDp
+import co.thingthing.fleksyapps.base.utils.hide
 import co.thingthing.fleksyapps.core.AppConfiguration
 import co.thingthing.fleksyapps.core.AppInputState
 import co.thingthing.fleksyapps.core.AppListener
@@ -52,7 +56,7 @@ import io.reactivex.schedulers.Schedulers
 import java.io.IOException
 
 @SuppressLint("CheckResult")
-abstract class BaseKeyboardApp : KeyboardApp {
+abstract class BaseKeyboardApp : KeyboardApp, RecyclerView.OnScrollListener() {
     var listener: AppListener? = null
     private var frameView: BaseAppView? = null
     private var fullView: View? = null
@@ -112,6 +116,29 @@ abstract class BaseKeyboardApp : KeyboardApp {
     open var topBarMode = TopBarMode.HIDDEN
 
     /**
+     * The smallest possible height of the carousel
+     */
+    private val minCarouselHeight by lazy {
+        (context?.resources?.getDimension(R.dimen.base_carousel_height)?.toInt() ?: 0).pxToDp()
+    }
+
+    /**
+     * The padding of the carousel with items
+     * We have to multiply the value by 4
+     * Because we have right and left paddings in parent layout and item layout as well
+     */
+    private val carouselWidthPaddingPx by lazy { (context?.resources?.getDimension(R.dimen.base_carousel_padding)?.toInt() ?: 0) * 4 }
+    /**
+     * Height of the carousel views
+     */
+    var carouselHeight = 0
+
+    /**
+     * Width of the carousel views in pixels
+     */
+    var carouselWidthPx = 0
+
+    /**
      * An optional extended item from an existing list result before preview
      */
     open fun preview(baseResult: BaseResult): Single<BaseResult> = Single.just(baseResult)
@@ -152,93 +179,9 @@ abstract class BaseKeyboardApp : KeyboardApp {
 
     private fun openFrameView(context: Context, theme: AppTheme, state: AppInputState): View =
         createFrameView(context).apply {
-            frameView = this
-            nextLoader = null
-
-            if (!Fresco.hasBeenInitialized()) {
-                Fresco.initialize(context)
-            }
-
-            updateLoader(contentLoading = true, categoriesLoading = true, itemLoading = false)
-
-            frameViewBinding.apply {
-                appIcon.apply {
-                    setImageDrawable(appIcon(context))
-                    setOnClickListener { listener?.hide() }
-                }
-
-                appSearchClose.apply {
-                    setOnClickListener { onSearchCloseClicked() }
-                }
-
-                zoomViewButton.apply {
-                    setOnClickListener {
-                        listener?.show(mode = KeyboardAppViewMode.FullView)
-                    }
-                }
-
-                appInput.apply {
-                    clearInput(this)
-
-                    setOnFocusChangeListener(::onInputFocusChanged)
-                    doOnTextChanged { text, _, _, _ -> onInputTextChanged(text) }
-                    setOnEditorActionListener { v, actionId, _ ->
-                        (actionId == EditorInfo.IME_ACTION_SEARCH).also {
-                            if (it) performSearch(v.text.toString())
-                        }
-                    }
-
-                    accessibilityDelegate = object : View.AccessibilityDelegate() {
-                        override fun sendAccessibilityEvent(host: View, eventType: Int) {
-                            when (eventType) {
-                                AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED -> {
-                                    listener?.onSelectionChanged(
-                                        appInput.selectionStart,
-                                        appInput.selectionEnd
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                appItems.apply {
-                    addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                            loadMoreIfNeeded(3)
-                        }
-                    })
-                }
-
-                appInputHint.text = context.getString(configuration.searchAppHint, appName)
-                appInputContainer.setOnClickListener { frameView?.let { appInput.requestFocus() } }
-
-                appAutocomplete.setListener(autocompleteListener)
-
-                inputState = state
-                onHideGesture = { listener?.hide() }
-            }
-
-
-            onThemeChanged(theme)
-            if (permissionsGranted()) {
-                onAppStart()
-            } else {
-                requestPermissions(this)
-            }
-
-        }
-
-    private fun openFullView(context: Context, theme: AppTheme, state: AppInputState): View =
-        createFullView(context).apply {
-            fullView = this
-            nextLoader = null
-
-            fullViewBinding.apply {
-                fullViewAppIcon.apply {
-                    setImageDrawable(appIcon(context))
-                    setOnClickListener { listener?.hide() }
-                }
+            calculateCarouselHeight {
+                frameView = this
+                nextLoader = null
 
                 if (!Fresco.hasBeenInitialized()) {
                     Fresco.initialize(context)
@@ -246,46 +189,152 @@ abstract class BaseKeyboardApp : KeyboardApp {
 
                 updateLoader(contentLoading = true, categoriesLoading = true, itemLoading = false)
 
-                fullViewAppInputContainer.apply {
-                    setOnClickListener {
-                        listener?.show(mode = KeyboardAppViewMode.FrameView(topBarMode))
+                frameViewBinding.apply {
+                    appIcon.apply {
+                        setImageDrawable(appIcon(context))
+                        setOnClickListener { listener?.hide() }
                     }
-                }
 
-                fullViewAppItems.apply {
-                    addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                            loadMoreIfNeeded(3)
+                    appSearchClose.apply {
+                        setOnClickListener { onSearchCloseClicked() }
+                    }
+
+                    appInput.apply {
+                        clearInput(this)
+
+                        setOnFocusChangeListener(::onInputFocusChanged)
+                        doOnTextChanged { text, _, _, _ -> onInputTextChanged(text) }
+                        setOnEditorActionListener { v, actionId, _ ->
+                            (actionId == EditorInfo.IME_ACTION_SEARCH).also {
+                                if (it) performSearch(v.text.toString())
+                            }
                         }
-                    })
+
+                        accessibilityDelegate = object : View.AccessibilityDelegate() {
+                            override fun sendAccessibilityEvent(host: View, eventType: Int) {
+                                when (eventType) {
+                                    AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED -> {
+                                        listener?.onSelectionChanged(
+                                            appInput.selectionStart,
+                                            appInput.selectionEnd
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    appItems.apply {
+                        addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                                loadMoreIfNeeded(3)
+                            }
+                        })
+                    }
+
+                    appInputHint.text = context.getString(configuration.searchAppHint, appName)
+                    appInputContainer.setOnClickListener { frameView?.let { appInput.requestFocus() } }
+
+                    appAutocomplete.setListener(autocompleteListener)
+
+                    inputState = state
+                    onHideGesture = { listener?.hide() }
                 }
 
-                fullViewAppInputHint.text =
-                    StringBuilder()
-                        .append(context.getString(configuration.searchHint))
-                        .append(context.getString(configuration.searchAppHint, appName))
-                        .toString()
 
-                fullViewAppClose.apply {
-                    setOnClickListener {
-                        listener?.hide()
-                    }
+                onThemeChanged(theme)
+                if (permissionsGranted()) {
+                    onAppStart()
+                } else {
+                    requestPermissions(this)
                 }
             }
+        }
 
-            inputState = state
+    private fun openFullView(context: Context, theme: AppTheme, state: AppInputState): View =
+        createFullView(context).apply {
+            calculateCarouselHeight {
+                fullView = this
+                nextLoader = null
 
-            onThemeChanged(theme)
-            if (permissionsGranted()) {
-                onAppStart()
-            } else {
-                requestPermissions(this)
+                fullViewBinding.apply {
+                    fullViewAppIcon.apply {
+                        setImageDrawable(appIcon(context))
+                        setOnClickListener { listener?.hide() }
+                    }
+
+                    if (!Fresco.hasBeenInitialized()) {
+                        Fresco.initialize(context)
+                    }
+
+                    updateLoader(contentLoading = true, categoriesLoading = true, itemLoading = false)
+
+                    fullViewAppInputContainer.apply {
+                        setOnClickListener {
+                            clear()
+                            listener?.show(mode = KeyboardAppViewMode.FrameView(topBarMode))
+                        }
+                    }
+
+                    fullViewAppItems.apply {
+                        addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                                loadMoreIfNeeded(3)
+                            }
+                        })
+                    }
+
+                    fullViewAppInputHint.text =
+                        StringBuilder()
+                            .append(context.getString(configuration.searchHint))
+                            .append(context.getString(configuration.searchAppHint, appName))
+                            .toString()
+
+                    fullViewAppClose.apply {
+                        setOnClickListener {
+                            listener?.hide()
+                        }
+                    }
+                }
+
+                inputState = state
+
+                onThemeChanged(theme)
+                if (permissionsGranted()) {
+                    onAppStart()
+                } else {
+                    requestPermissions(this)
+                }
             }
         }
 
     open fun permissionsGranted() = true
 
     open fun requestPermissions(baseAppView: BaseAppView) {}
+
+    private fun calculateCarouselHeight(onSuccess: () -> Unit) {
+        var isReturned = false
+        if (isFullView()) {
+            var globalLayoutListener: ViewTreeObserver.OnGlobalLayoutListener? = null
+            globalLayoutListener = ViewTreeObserver.OnGlobalLayoutListener {
+                val recyclerView = fullViewBinding.fullViewAppItems
+                val height = recyclerView.height.pxToDp()
+
+                carouselWidthPx = recyclerView.width - (carouselWidthPaddingPx)
+                if (isReturned.not() && height >= minCarouselHeight) {
+                    carouselHeight = height
+                    onSuccess()
+                    isReturned = true
+                    fullViewBinding.root.viewTreeObserver.removeOnGlobalLayoutListener(globalLayoutListener)
+                }
+            }
+            fullViewBinding.root.viewTreeObserver.addOnGlobalLayoutListener(globalLayoutListener)
+        } else {
+            carouselHeight = minCarouselHeight
+            onSuccess()
+            isReturned = true
+        }
+    }
 
     fun onPermissionsGranted() {
         onAppStart()
@@ -463,12 +512,10 @@ abstract class BaseKeyboardApp : KeyboardApp {
     private fun hintColor(@ColorInt color: Int) =
         Color.argb(configuration.hintAlpha, color.red, color.green, color.blue)
 
+    private fun isFullView() = fullView != null
+
     private fun loadMoreIfNeeded(pages: Int) {
-        val recyclerView = if (fullView != null) {
-            fullViewBinding.fullViewAppItems
-        } else {
-            frameViewBinding.appItems
-        }
+        val recyclerView = currentItemsRecyclerView()
         if (!isContentLoading) {
             val offset = recyclerView.computeHorizontalScrollOffset()
             val extent = recyclerView.computeHorizontalScrollExtent()
@@ -507,7 +554,7 @@ abstract class BaseKeyboardApp : KeyboardApp {
         loadCategories()
     }
 
-    private var resultAdapter: BaseResultAdapter? = null
+    protected var resultAdapter: BaseResultAdapter? = null
     private var categoryAdapter: BaseCategoryAdapter? = null
 
     private fun loadCategories() {
@@ -522,6 +569,7 @@ abstract class BaseKeyboardApp : KeyboardApp {
 
     private fun onCategoriesError(err: Throwable?) {
         Log.e("Fleksy", "Error processing categories", err)
+        currentCategoriesRecyclerView().hide()
         updateLoader(categoriesLoading = false)
     }
 
@@ -538,16 +586,11 @@ abstract class BaseKeyboardApp : KeyboardApp {
                 }
             }
         }
-        if (fullView != null) {
-            fullViewBinding.fullViewAppCategories.also {
-                it.adapter = categoryAdapter
-                it.layoutManager = LinearLayoutManager(frameView?.context, HORIZONTAL, false)
-            }
-        } else {
-            frameViewBinding.appCategories.also {
-                it.adapter = categoryAdapter
-                it.layoutManager = LinearLayoutManager(frameView?.context, HORIZONTAL, false)
-            }
+        val categoriesRecyclerView = currentCategoriesRecyclerView()
+        categoriesRecyclerView.isVisible = items.isNotEmpty()
+        categoriesRecyclerView.also {
+            it.adapter = categoryAdapter
+            it.layoutManager = LinearLayoutManager(frameView?.context, HORIZONTAL, false)
         }
         updateLoader(categoriesLoading = false)
         selectCategory(defaultCategory)
@@ -555,7 +598,9 @@ abstract class BaseKeyboardApp : KeyboardApp {
 
     private fun performDefault() {
         selectCategory(defaultCategory)
-        nextLoader = { newPagination -> default(newPagination) }
+        nextLoader = { newPagination ->
+            default(newPagination)
+        }
         pagination = Pagination(limit = configuration.requestLimit)
         perform(default(pagination))
     }
@@ -581,26 +626,37 @@ abstract class BaseKeyboardApp : KeyboardApp {
     }
 
     private fun perform(request: Single<List<BaseResult>>) {
-        resultAdapter = BaseResultAdapter().apply {
+        val recyclerView = currentItemsRecyclerView()
+        resultAdapter?.releasePlayer()
+        resultAdapter = BaseResultAdapter(
+            onVideoUnMuted = { position ->
+                recyclerView.post {
+                    recyclerView.smoothScrollToPosition(position)
+                }
+            }
+        ).apply {
             clickSubject.subscribe { onItemSelected(it) }
         }
 
-        if (fullView != null) {
-            fullViewBinding.fullViewAppItems.apply {
-                adapter = resultAdapter
-                layoutManager = buildHorizontalLayoutManager()
-            }
-        } else {
-            frameViewBinding.appItems.apply {
-                adapter = resultAdapter
-                layoutManager = buildHorizontalLayoutManager()
-            }
+        recyclerView.apply {
+            adapter = resultAdapter
+            itemAnimator = null
+            layoutManager = buildHorizontalLayoutManager()
+            addOnScrollListener(this@BaseKeyboardApp)
         }
 
         contentSubscription.dispose()
         updateLoader(contentLoading = true)
         performAppend(request)
     }
+
+    protected fun currentItemsRecyclerView() =
+        if (isFullView()) fullViewBinding.fullViewAppItems
+        else frameViewBinding.appItems
+
+    private fun currentCategoriesRecyclerView() =
+        if (isFullView()) fullViewBinding.fullViewAppCategories
+        else frameViewBinding.appCategories
 
     open fun onItemSelected(result: BaseResult) {
         resultToAppMedia(result = result)?.also { media ->
@@ -700,6 +756,20 @@ abstract class BaseKeyboardApp : KeyboardApp {
             }
         }
 
+        is BaseResult.VideoWithSound -> {
+            result.video.firstOrNull()?.let {
+                AppMedia(
+                    media = AppMediaSource.RemoteUrl(
+                        url = it.url,
+                        contentType = it.contentType
+                    ),
+                    label = result.label,
+                    url = result.link,
+                    sourceQuery = result.sourceQuery
+                )
+            }
+        }
+
         is BaseResult.Card -> {
             AppMedia(
                 media = AppMediaSource.RemoteUrl(result.url),
@@ -736,7 +806,7 @@ abstract class BaseKeyboardApp : KeyboardApp {
     }
 
     private fun showEmptyResultError() {
-        if (fullView != null) {
+        if (isFullView()) {
             fullEmptyErrorBinding.root.visibility = View.VISIBLE
         } else {
             frameEmptyErrorBinding.root.visibility = View.VISIBLE
@@ -744,7 +814,7 @@ abstract class BaseKeyboardApp : KeyboardApp {
     }
 
     private fun showGeneralError(request: Single<List<BaseResult>>) {
-        if (fullView != null) {
+        if (isFullView()) {
             fullGeneralErrorBinding.apply {
                 root.visibility = View.VISIBLE
                 errorGeneralCancelButton.setOnClickListener { listener?.hide() }
@@ -767,7 +837,7 @@ abstract class BaseKeyboardApp : KeyboardApp {
     }
 
     private fun showConnectionError(request: Single<List<BaseResult>>) {
-        if (fullView != null) {
+        if (isFullView()) {
             fullConnectionErrorBinding.apply {
                 root.visibility = View.VISIBLE
                 errorConnectionCancelButton.setOnClickListener { listener?.hide() }
@@ -795,7 +865,7 @@ abstract class BaseKeyboardApp : KeyboardApp {
             if (pagination.page == 0) showEmptyResultError()
             nextLoader = null
         } else {
-            if (fullView != null) {
+            if (isFullView()) {
                 fullEmptyErrorBinding.root.visibility = View.GONE
             } else {
                 frameEmptyErrorBinding.root.visibility = View.GONE
@@ -933,12 +1003,13 @@ abstract class BaseKeyboardApp : KeyboardApp {
 
     }
 
-    private fun clear() {
+    open fun clear() {
         contentSubscription.dispose()
         categoriesSubscription.dispose()
         autocompleteSubscription.dispose()
         frameView = null
         nextLoader = null
         appConfiguration = null
+        resultAdapter?.releasePlayer()
     }
 }

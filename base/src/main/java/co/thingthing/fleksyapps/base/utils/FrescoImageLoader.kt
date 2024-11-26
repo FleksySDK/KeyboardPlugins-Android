@@ -15,8 +15,8 @@ import com.facebook.drawee.view.SimpleDraweeView
 import com.facebook.imagepipeline.request.ImageRequestBuilder
 
 class FrescoImageLoader {
-    private companion object {
-        private const val FADE_DURATION = 150
+    companion object {
+        const val FADE_DURATION = 150
         private const val ALPHA = 80
     }
 

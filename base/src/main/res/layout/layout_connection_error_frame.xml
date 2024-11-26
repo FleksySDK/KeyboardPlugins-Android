@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/white"
+    android:clickable="true"
+    android:focusable="true"
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        app:srcCompat="@drawable/connection_error_illustration" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/errorConnectionLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/error_connection_message"
+        android:textSize="@dimen/error_message_text_size_frame" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/errorConnectionCancelButton"
+            style="@style/AppButton"
+            android:paddingVertical="@dimen/buttons_vertical_padding_frame"
+            android:layout_height="wrap_content"
+            android:layout_width="100dp"
+            android:textSize="13sp"
+            android:layout_marginVertical="10dp"
+            android:layout_marginHorizontal="@dimen/error_buttons_margin"
+            android:text="@string/error_message_close" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            style="@style/AppButton"
+            android:id="@+id/errorConnectionRetryButton"
+            android:paddingVertical="@dimen/buttons_vertical_padding_frame"
+            android:layout_height="wrap_content"
+            android:layout_width="100dp"
+            android:textSize="13sp"
+            android:layout_marginVertical="10dp"
+            android:layout_marginHorizontal="@dimen/error_buttons_margin"
+            android:text="@string/error_message_retry"/>
+
+    </LinearLayout>
+
+</LinearLayout>

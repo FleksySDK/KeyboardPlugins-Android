@@ -5,4 +5,5 @@
     <color name="secondary_color">#d0f3f2</color>
     <color name="tertiary_color">#d8d8d8</color>
     <color name="card_background_outline_color">#00000000</color>
+    <color name="constant_transparent">#00000000</color>
 </resources>

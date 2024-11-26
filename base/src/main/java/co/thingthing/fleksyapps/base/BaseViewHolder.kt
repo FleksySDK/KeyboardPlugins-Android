@@ -15,4 +15,10 @@ abstract class BaseViewHolder<T : Any>(itemView: View) : RecyclerView.ViewHolder
     fun setClickSubject(subject: Subject<T>) {
         itemView.setOnClickListener { subject.onNext(viewModel) }
     }
+
+    open fun onRecycled() {}
+
+    companion object {
+        val DEFAULT_CONTENT_TYPES = listOf("image/webp", "video/mp4", "image/gif", "image/jpeg")
+    }
 }

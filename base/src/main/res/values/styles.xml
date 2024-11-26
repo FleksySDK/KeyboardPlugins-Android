@@ -3,7 +3,7 @@
     <style name="CardTitle" parent="Widget.AppCompat.TextView">
         <item name="android:fontFamily">sans-serif-medium</item>
         <item name="android:textColor">@color/secondary_color</item>
-        <item name="android:textSize">@dimen/card_title_text_size</item>
+        <item name="android:textSize">@dimen/title_text_size</item>
         <item name="android:maxLines">1</item>
         <item name="android:ellipsize">end</item>
     </style>
@@ -11,7 +11,7 @@
     <style name="CardDescription" parent="Widget.AppCompat.TextView">
         <item name="android:fontFamily">sans-serif</item>
         <item name="android:textColor">@color/secondary_color</item>
-        <item name="android:textSize">@dimen/card_title_text_size</item>
+        <item name="android:textSize">@dimen/title_text_size</item>
         <item name="android:maxLines">4</item>
         <item name="android:ellipsize">end</item>
     </style>

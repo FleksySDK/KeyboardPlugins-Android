@@ -6,4 +6,5 @@
     <color name="secondary_color">#322659</color>
     <color name="tertiary_color">#626262</color>
     <color name="card_background_outline_color">#eaeaea</color>
+    <color name="constant_transparent">#00000000</color>
 </resources>

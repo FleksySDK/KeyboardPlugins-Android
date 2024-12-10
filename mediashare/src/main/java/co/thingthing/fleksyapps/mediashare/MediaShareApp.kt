@@ -21,6 +21,7 @@ import co.thingthing.fleksyapps.mediashare.models.MediaShareResponse
 import co.thingthing.fleksyapps.mediashare.models.toCategories
 import co.thingthing.fleksyapps.mediashare.network.MediaShareService
 import co.thingthing.fleksyapps.mediashare.network.getUserAgent
+import co.thingthing.fleksyapps.mediashare.network.models.MediaShareRequestDTO.Companion.ALL_SIZES_ADS_HEIGHT
 import co.thingthing.fleksyapps.mediashare.network.toNetworkContentType
 import co.thingthing.fleksyapps.mediashare.utils.DeviceInfoProvider
 import co.thingthing.fleksyapps.mediashare.utils.DeviceInfoProviderImpl
@@ -122,6 +123,10 @@ class MediaShareApp(
         } ?: ""
     }
 
+    private fun getAdMaxHeight(): Int {
+        return carouselHeight ?: ALL_SIZES_ADS_HEIGHT
+    }
+
     override fun onItemSelected(result: BaseResult) {
         super.onItemSelected(result)
         result.id?.let { id ->
@@ -135,7 +140,7 @@ class MediaShareApp(
     override fun default(pagination: Pagination): Single<List<BaseResult>> =
         service.getContent(
             content = MediaShareService.Content.Trending(pagination.page),
-            adMaxHeight = carouselHeight
+            adMaxHeight = getAdMaxHeight()
         )
             .subscribeOn(Schedulers.io()) // Ensure initial work is done on IO thread
             .observeOn(AndroidSchedulers.mainThread())
@@ -161,7 +166,7 @@ class MediaShareApp(
     private fun search(query: String, pagination: Pagination): Single<List<BaseResult>> =
         service.getContent(
             content = MediaShareService.Content.Search(query = query, pagination.page),
-            adMaxHeight = carouselHeight
+            adMaxHeight = getAdMaxHeight()
         )
             .subscribeOn(Schedulers.io()) // Ensure initial work is done on IO thread
             .observeOn(AndroidSchedulers.mainThread())
@@ -184,7 +189,7 @@ class MediaShareApp(
 
     private val remoteCategories
         get() = service.getTags(
-            adMaxHeight = carouselHeight
+            adMaxHeight = getAdMaxHeight()
         ).map { category ->
             category.toCategories(appTheme = theme, typeface = customTypefaces?.bold)
         }

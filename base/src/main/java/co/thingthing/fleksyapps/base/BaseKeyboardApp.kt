@@ -82,6 +82,7 @@ abstract class BaseKeyboardApp : KeyboardApp, RecyclerView.OnScrollListener() {
     private lateinit var fullConnectionErrorBinding: LayoutConnectionErrorBinding
     private lateinit var fullGeneralErrorBinding: LayoutGeneralErrorBinding
     private lateinit var fullEmptyErrorBinding: LayoutEmptyErrorBinding
+    private var globalLayoutListener: ViewTreeObserver.OnGlobalLayoutListener? = null
 
     val locale get() = appConfiguration?.currentLocale
     val context get() = frameView?.context ?: fullView?.context
@@ -131,7 +132,7 @@ abstract class BaseKeyboardApp : KeyboardApp, RecyclerView.OnScrollListener() {
     /**
      * Height of the carousel views
      */
-    var carouselHeight = 0
+    var carouselHeight: Int? = null
 
     /**
      * Width of the carousel views in pixels
@@ -179,9 +180,88 @@ abstract class BaseKeyboardApp : KeyboardApp, RecyclerView.OnScrollListener() {
 
     private fun openFrameView(context: Context, theme: AppTheme, state: AppInputState): View =
         createFrameView(context).apply {
-            calculateCarouselHeight {
-                frameView = this
-                nextLoader = null
+            calculateCarouselHeight()
+            frameView = this
+            nextLoader = null
+
+            if (!Fresco.hasBeenInitialized()) {
+                Fresco.initialize(context)
+            }
+
+            updateLoader(contentLoading = true, categoriesLoading = true, itemLoading = false)
+
+            frameViewBinding.apply {
+                appIcon.apply {
+                    setImageDrawable(appIcon(context))
+                    setOnClickListener { listener?.hide() }
+                }
+
+                appSearchClose.apply {
+                    setOnClickListener { onSearchCloseClicked() }
+                }
+
+                appInput.apply {
+                    clearInput(this)
+
+                    setOnFocusChangeListener(::onInputFocusChanged)
+                    doOnTextChanged { text, _, _, _ -> onInputTextChanged(text) }
+                    setOnEditorActionListener { v, actionId, _ ->
+                        (actionId == EditorInfo.IME_ACTION_SEARCH).also {
+                            if (it) performSearch(v.text.toString())
+                        }
+                    }
+
+                    accessibilityDelegate = object : View.AccessibilityDelegate() {
+                        override fun sendAccessibilityEvent(host: View, eventType: Int) {
+                            when (eventType) {
+                                AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED -> {
+                                    listener?.onSelectionChanged(
+                                        appInput.selectionStart,
+                                        appInput.selectionEnd
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                appItems.apply {
+                    addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                            loadMoreIfNeeded(3)
+                        }
+                    })
+                }
+
+                appInputHint.text = context.getString(configuration.searchAppHint, appName)
+                appInputContainer.setOnClickListener { frameView?.let { appInput.requestFocus() } }
+
+                appAutocomplete.setListener(autocompleteListener)
+
+                inputState = state
+                onHideGesture = { listener?.hide() }
+            }
+
+
+            onThemeChanged(theme)
+            if (permissionsGranted()) {
+                onAppStart()
+            } else {
+                requestPermissions(this)
+            }
+        }
+
+    private fun openFullView(context: Context, theme: AppTheme, state: AppInputState): View =
+        createFullView(context).apply {
+            calculateCarouselHeight()
+            fullView = this
+            nextLoader = null
+
+            fullViewBinding.apply {
+                fullViewAppIcon.apply {
+                    setImageDrawable(appIcon(context))
+                    setOnClickListener { listener?.hide() }
+                }
 
                 if (!Fresco.hasBeenInitialized()) {
                     Fresco.initialize(context)
@@ -189,122 +269,41 @@ abstract class BaseKeyboardApp : KeyboardApp, RecyclerView.OnScrollListener() {
 
                 updateLoader(contentLoading = true, categoriesLoading = true, itemLoading = false)
 
-                frameViewBinding.apply {
-                    appIcon.apply {
-                        setImageDrawable(appIcon(context))
-                        setOnClickListener { listener?.hide() }
+                fullViewAppInputContainer.apply {
+                    setOnClickListener {
+                        clear()
+                        listener?.show(mode = KeyboardAppViewMode.FrameView(topBarMode))
                     }
-
-                    appSearchClose.apply {
-                        setOnClickListener { onSearchCloseClicked() }
-                    }
-
-                    appInput.apply {
-                        clearInput(this)
-
-                        setOnFocusChangeListener(::onInputFocusChanged)
-                        doOnTextChanged { text, _, _, _ -> onInputTextChanged(text) }
-                        setOnEditorActionListener { v, actionId, _ ->
-                            (actionId == EditorInfo.IME_ACTION_SEARCH).also {
-                                if (it) performSearch(v.text.toString())
-                            }
-                        }
-
-                        accessibilityDelegate = object : View.AccessibilityDelegate() {
-                            override fun sendAccessibilityEvent(host: View, eventType: Int) {
-                                when (eventType) {
-                                    AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED -> {
-                                        listener?.onSelectionChanged(
-                                            appInput.selectionStart,
-                                            appInput.selectionEnd
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    appItems.apply {
-                        addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                                loadMoreIfNeeded(3)
-                            }
-                        })
-                    }
-
-                    appInputHint.text = context.getString(configuration.searchAppHint, appName)
-                    appInputContainer.setOnClickListener { frameView?.let { appInput.requestFocus() } }
-
-                    appAutocomplete.setListener(autocompleteListener)
-
-                    inputState = state
-                    onHideGesture = { listener?.hide() }
                 }
 
+                fullViewAppItems.apply {
+                    addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                            loadMoreIfNeeded(3)
+                        }
+                    })
+                }
 
-                onThemeChanged(theme)
-                if (permissionsGranted()) {
-                    onAppStart()
-                } else {
-                    requestPermissions(this)
+                fullViewAppInputHint.text =
+                    StringBuilder()
+                        .append(context.getString(configuration.searchHint))
+                        .append(context.getString(configuration.searchAppHint, appName))
+                        .toString()
+
+                fullViewAppClose.apply {
+                    setOnClickListener {
+                        listener?.hide()
+                    }
                 }
             }
-        }
 
-    private fun openFullView(context: Context, theme: AppTheme, state: AppInputState): View =
-        createFullView(context).apply {
-            calculateCarouselHeight {
-                fullView = this
-                nextLoader = null
+            inputState = state
 
-                fullViewBinding.apply {
-                    fullViewAppIcon.apply {
-                        setImageDrawable(appIcon(context))
-                        setOnClickListener { listener?.hide() }
-                    }
-
-                    if (!Fresco.hasBeenInitialized()) {
-                        Fresco.initialize(context)
-                    }
-
-                    updateLoader(contentLoading = true, categoriesLoading = true, itemLoading = false)
-
-                    fullViewAppInputContainer.apply {
-                        setOnClickListener {
-                            clear()
-                            listener?.show(mode = KeyboardAppViewMode.FrameView(topBarMode))
-                        }
-                    }
-
-                    fullViewAppItems.apply {
-                        addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                                loadMoreIfNeeded(3)
-                            }
-                        })
-                    }
-
-                    fullViewAppInputHint.text =
-                        StringBuilder()
-                            .append(context.getString(configuration.searchHint))
-                            .append(context.getString(configuration.searchAppHint, appName))
-                            .toString()
-
-                    fullViewAppClose.apply {
-                        setOnClickListener {
-                            listener?.hide()
-                        }
-                    }
-                }
-
-                inputState = state
-
-                onThemeChanged(theme)
-                if (permissionsGranted()) {
-                    onAppStart()
-                } else {
-                    requestPermissions(this)
-                }
+            onThemeChanged(theme)
+            if (permissionsGranted()) {
+                onAppStart()
+            } else {
+                requestPermissions(this)
             }
         }
 
@@ -312,27 +311,18 @@ abstract class BaseKeyboardApp : KeyboardApp, RecyclerView.OnScrollListener() {
 
     open fun requestPermissions(baseAppView: BaseAppView) {}
 
-    private fun calculateCarouselHeight(onSuccess: () -> Unit) {
-        var isReturned = false
+    private fun calculateCarouselHeight() {
         if (isFullView()) {
-            var globalLayoutListener: ViewTreeObserver.OnGlobalLayoutListener? = null
             globalLayoutListener = ViewTreeObserver.OnGlobalLayoutListener {
                 val recyclerView = fullViewBinding.fullViewAppItems
                 val height = recyclerView.height.pxToDp()
 
                 carouselWidthPx = recyclerView.width - (carouselWidthPaddingPx)
-                if (isReturned.not() && height >= minCarouselHeight) {
-                    carouselHeight = height
-                    onSuccess()
-                    isReturned = true
-                    fullViewBinding.root.viewTreeObserver.removeOnGlobalLayoutListener(globalLayoutListener)
-                }
+                carouselHeight = height
             }
             fullViewBinding.root.viewTreeObserver.addOnGlobalLayoutListener(globalLayoutListener)
         } else {
             carouselHeight = minCarouselHeight
-            onSuccess()
-            isReturned = true
         }
     }
 
@@ -1011,5 +1001,9 @@ abstract class BaseKeyboardApp : KeyboardApp, RecyclerView.OnScrollListener() {
         nextLoader = null
         appConfiguration = null
         resultAdapter?.releasePlayer()
+        if (isFullView() && globalLayoutListener != null) {
+            fullViewBinding.root.viewTreeObserver.removeOnGlobalLayoutListener(globalLayoutListener)
+            globalLayoutListener = null
+        }
     }
 }

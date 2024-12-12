@@ -8,6 +8,13 @@ import co.thingthing.fleksyapps.mediashare.network.getDeviceIfa
  * Provides device-related information for the current Android device.
  */
 interface DeviceInfoProvider {
+    companion object {
+        /**
+         * Represents an invalid or unavailable IDFA.
+         */
+        const val INVALID_IDFA = "00000000-0000-0000-0000-000000000000"
+    }
+
     /** The version of the operating system running on the device. */
     val operatingSystemVersion: String
 

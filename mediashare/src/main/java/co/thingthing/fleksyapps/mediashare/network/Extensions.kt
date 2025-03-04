@@ -14,7 +14,11 @@ internal fun MediaShareApp.ContentType.toNetworkContentType() = when (this) {
     MediaShareApp.ContentType.STICKERS -> MediaShareRequestDTO.ContentType.Stickers
 }
 
-internal fun Context?.getUserAgent() = this?.let { WebView(it).settings.userAgentString }.orEmpty()
+internal fun Context?.getUserAgent() = try {
+    this?.let { WebView(it).settings.userAgentString }.orEmpty()
+} catch (e: Exception) {
+    ""
+}
 
 internal fun Context?.getDeviceIfa() = try {
     val idfa = this?.let { AdvertisingIdClient.getAdvertisingIdInfo(it).id }

@@ -14,7 +14,7 @@ sealed class BaseResult(
     }
 
     open class Image(
-        override val id: String,
+        override val id: String? = null,
         val image: List<BaseMedia>,
         val thumbnail: List<BaseMedia>? = null,
         val placeholder: List<BaseMedia>? = null,

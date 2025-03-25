@@ -6,6 +6,8 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.graphics.drawable.GradientDrawable
+import android.os.Build
+import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -17,6 +19,7 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.ExtractedText
 import android.view.inputmethod.ExtractedTextRequest
 import android.widget.EditText
+import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.ColorInt
 import androidx.core.graphics.BlendModeColorFilterCompat
 import androidx.core.graphics.BlendModeCompat
@@ -916,6 +919,12 @@ abstract class BaseKeyboardApp : KeyboardApp, RecyclerView.OnScrollListener() {
         fullGeneralErrorBinding =
             LayoutGeneralErrorBinding.bind(fullViewBinding.fullViewGeneralErrorLayout.root)
 
+        fullViewBinding.fullViewContainer.run {
+            if (caseOfIncorrectBottomNavigation(fullViewBinding.root)) {
+                setPadding(paddingLeft, paddingTop, paddingRight, 0)
+            }
+        }
+
         return fullViewBinding.root.also {
             fullView = it
         }
@@ -1005,5 +1014,41 @@ abstract class BaseKeyboardApp : KeyboardApp, RecyclerView.OnScrollListener() {
             fullViewBinding.root.viewTreeObserver.removeOnGlobalLayoutListener(globalLayoutListener)
             globalLayoutListener = null
         }
+    }
+
+    /**
+     * In some devices (Google Pixels with Android 14) when gesture navigation enabled
+     * The location of the bottom navigation buttons when the gesture navigation is enabled is wrong.
+     * Check (https://thingthing.atlassian.net/browse/FSDK-1943)
+     *
+     * @param view View object for access to context with some device specific information
+     * @return true if this is Google Pixel with Android 14 otherwise will return false
+     */
+    // TODO: duplicate function from FSDK-1943. It needs to be unified somehow
+    private fun caseOfIncorrectBottomNavigation(view: View?) =
+        view != null && isGestureNavigationEnabled(view.context) && isGooglePixel() && isAndroid14OrHigher()
+
+    private fun isGestureNavigationEnabled(context: Context): Boolean {
+        return try {
+            val mode = Settings.Secure.getInt(context.contentResolver, "navigation_mode")
+            mode == GESTURE_NAVIGATION_CODE
+        } catch (e: Settings.SettingNotFoundException) {
+            false
+        }
+    }
+
+    private fun isGooglePixel(): Boolean {
+        val brand = Build.BRAND?.lowercase() ?: ""
+        val model = Build.MODEL?.lowercase() ?: ""
+        return brand == "google" && model.contains("pixel")
+    }
+
+    @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    private fun isAndroid14OrHigher(): Boolean {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+    }
+
+    companion object {
+        const val GESTURE_NAVIGATION_CODE = 2
     }
 }

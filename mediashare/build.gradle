@@ -48,4 +48,8 @@ dependencies {
 
     //implementation("co.thingthing.fleksyapps:base:2.2.0")
     api project(':base')
+
+    implementation("com.squareup.okio:okio:3.4.0") {
+        because("Fixes CVE-2023-3635 in earlier versions")
+    }
 }
